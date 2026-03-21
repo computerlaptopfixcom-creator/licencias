@@ -356,8 +356,8 @@ export default function Dashboard() {
             handleLogin(target.identifier.value, target.password.value);
           }} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-white/40 ml-1">Usuario o Correo</label>
-              <input required name="identifier" type="text" placeholder="hielo o correo@ejemplo.com" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500/50 transition-colors" />
+              <label className="text-xs font-bold uppercase tracking-wider text-white/40 ml-1">Usuario</label>
+              <input required name="identifier" type="text" placeholder="Usuario" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500/50 transition-colors" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-white/40 ml-1">Contraseña</label>
@@ -1073,20 +1073,22 @@ export default function Dashboard() {
                           </div>
                           <span className="font-mono text-xs text-white/40 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">{userLicenses} keys</span>
                         </div>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => setViewUserLicenses({show: true, userId: u.id, userName: u.name})}
-                            className="flex-1 py-2.5 bg-white/5 text-white/60 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all active:scale-95 text-center"
-                          >
-                            Ver Llaves
-                          </button>
-                          <button 
-                            onClick={() => setShowAssignModal({show: true, userId: u.id, userName: u.name})}
-                            className="flex-1 py-2.5 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 text-center"
-                          >
-                            Asignar Lote
-                          </button>
-                        </div>
+                        {u.role !== 'admin' && (
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => setViewUserLicenses({show: true, userId: u.id, userName: u.name})}
+                              className="flex-1 py-2.5 bg-white/5 text-white/60 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all active:scale-95 text-center"
+                            >
+                              Ver Llaves
+                            </button>
+                            <button 
+                              onClick={() => setShowAssignModal({show: true, userId: u.id, userName: u.name})}
+                              className="flex-1 py-2.5 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 text-center"
+                            >
+                              Asignar Lote
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1118,20 +1120,22 @@ export default function Dashboard() {
                             </td>
                             <td className="px-8 py-5 font-mono text-xs">{userLicenses} keys active</td>
                             <td className="px-8 py-5 text-right">
-                              <div className="flex justify-end gap-2">
-                                <button 
-                                  onClick={() => setViewUserLicenses({show: true, userId: u.id, userName: u.name})}
-                                  className="px-4 py-2 bg-white/5 text-white/40 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all active:scale-95"
-                                >
-                                  Ver Llaves
-                                </button>
-                                <button 
-                                  onClick={() => setShowAssignModal({show: true, userId: u.id, userName: u.name})}
-                                  className="px-4 py-2 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95"
-                                >
-                                  Asignar Lote
-                                </button>
-                              </div>
+                              {u.role !== 'admin' && (
+                                <div className="flex justify-end gap-2">
+                                  <button 
+                                    onClick={() => setViewUserLicenses({show: true, userId: u.id, userName: u.name})}
+                                    className="px-4 py-2 bg-white/5 text-white/40 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                                  >
+                                    Ver Llaves
+                                  </button>
+                                  <button 
+                                    onClick={() => setShowAssignModal({show: true, userId: u.id, userName: u.name})}
+                                    className="px-4 py-2 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95"
+                                  >
+                                    Asignar Lote
+                                  </button>
+                                </div>
+                              )}
                             </td>
                           </tr>
                         );
