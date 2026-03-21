@@ -91,7 +91,7 @@ export async function withAdmin(handler: (user: TokenPayload, request: Request) 
 export function setAuthCookie(response: NextResponse, token: string): NextResponse {
   response.cookies.set('auth_token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // EasyPanel uses HTTP behind reverse proxy
     sameSite: 'lax',
     path: '/',
     maxAge: TOKEN_EXPIRY / 1000 // seconds
