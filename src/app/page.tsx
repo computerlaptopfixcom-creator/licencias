@@ -25,6 +25,20 @@ import {
 import { cn } from '../lib/utils';
 import * as LucideIcons from 'lucide-react';
 
+// Security: sanitize HTML to prevent XSS — only allow safe formatting tags
+function sanitizeHtml(html: string): string {
+  // Remove <script>, <iframe>, <object>, <embed>, <form>, <input>, <style>, <link>, <meta> tags and their content
+  let clean = html.replace(/<(script|iframe|object|embed|form|input|style|link|meta)[^>]*>[\s\S]*?<\/\1>/gi, '');
+  clean = clean.replace(/<(script|iframe|object|embed|form|input|style|link|meta)[^>]*\/?>/gi, '');
+  // Remove event handlers (onclick, onerror, onload, etc.)
+  clean = clean.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+  clean = clean.replace(/\s*on\w+\s*=\s*\S+/gi, '');
+  // Remove javascript: protocol in href/src
+  clean = clean.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, '');
+  clean = clean.replace(/src\s*=\s*["']javascript:[^"']*["']/gi, '');
+  return clean;
+}
+
 // Catalog is now dynamic — loaded from database via /api/catalog
 
 export default function Dashboard() {
@@ -680,7 +694,7 @@ export default function Dashboard() {
                     <div className={cn(
                       "text-xs leading-snug mb-2 pr-4",
                       !n.read ? "font-bold text-white" : "font-medium text-white/50 text-white/40"
-                    )} dangerouslySetInnerHTML={{ __html: n.message }} />
+                    )} dangerouslySetInnerHTML={{ __html: sanitizeHtml(n.message) }} />
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
                         {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

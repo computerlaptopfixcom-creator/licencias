@@ -16,9 +16,36 @@ import { getSettings } from "@/lib/db";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = getSettings();
+  const brandName = settings.brandName || 'Micro License System';
+  const description = settings.appDescription || "Advanced license management platform for Windows and Office keys.";
+  const themeColor = settings.primaryColor || '#3b82f6';
+
   return {
-    title: `${settings.brandName || 'Micro License System'} - Premium Software Keys`,
-    description: settings.appDescription || "Advanced license management platform for Windows and Office keys.",
+    title: {
+      default: `${brandName} - Premium Software Keys`,
+      template: `%s | ${brandName}`,
+    },
+    description,
+    keywords: ['licencias', 'software', 'Windows', 'Office', 'keys', 'activación', brandName],
+    robots: {
+      index: false,       // Panel privado — no indexar por defecto
+      follow: false,
+    },
+    openGraph: {
+      title: `${brandName} - Premium Software Keys`,
+      description,
+      type: 'website',
+      locale: 'es_MX',
+      siteName: brandName,
+    },
+    twitter: {
+      card: 'summary',
+      title: `${brandName} - Premium Software Keys`,
+      description,
+    },
+    other: {
+      'theme-color': themeColor,
+    },
   };
 }
 

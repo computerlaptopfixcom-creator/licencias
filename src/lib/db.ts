@@ -118,16 +118,23 @@ export function findUserSafe(identifier: string) {
   return safeUser;
 }
 
+// Security: strip HTML-dangerous characters from user names to prevent stored XSS
+function sanitizeName(name: string): string {
+  return name.replace(/[<>"'&]/g, '').trim();
+}
+
 export function addUser(name: string, email?: string, password?: string, _role?: string) {
   const db = getDb();
   const role: 'admin' | 'user' = 'user'; // Always enforce 'user' role for security
+  const safeName = sanitizeName(name);
+  if (!safeName) return null; // Reject empty names after sanitization
   
-  const existing = db.users.find((u: any) => (email && u.email === email) || u.name === name);
+  const existing = db.users.find((u: any) => (email && u.email === email) || u.name === safeName);
   if (existing) return null;
   
   const newUser = {
     id: `u_${crypto.randomUUID().slice(0, 8)}`,
-    name,
+    name: safeName,
     email: email || '',
     password: bcrypt.hashSync(password || '123456', 10),
     role,

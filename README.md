@@ -59,26 +59,29 @@ docker run -d -p 3000:3000 -v ./data:/app/src/data --name licencias_app licencia
 
 ## 🛡️ Seguridad y Tecnología
 
-### Onboarding de Seguridad (NUEVO)
-El sistema ahora incluye un flujo de **configuración obligatoria** para el administrador inicial. Al iniciar sesión por primera vez:
+### Onboarding de Seguridad
+El sistema incluye un flujo de **configuración obligatoria** para el administrador inicial. Al iniciar sesión por primera vez:
 1. Se debe elegir un **nombre de usuario personalizado**.
 2. Se debe configurar una **contraseña segura** validada por un medidor de fuerza en tiempo real.
 3. El acceso al panel está bloqueado hasta completar este proceso.
 
----
+### Protección OWASP
+- **Anti-XSS**: Sanitización de HTML en notificaciones internas y nombres de usuario.
+- **JWT httpOnly**: Tokens de autenticación almacenados en cookies seguras.
+- **IDOR Prevention**: Los endpoints de reveal/report usan el userId del token JWT.
+- **Bcryptjs**: Contraseñas hasheadas con 10 rondas de salting.
+- **Role Enforcement**: El rol de usuario siempre se fuerza a 'user' en el backend.
 
-## 🛡️ Seguridad y Tecnología
+### SEO Dinámico (Marca Blanca)
+- Metadatos **OpenGraph** y **Twitter Cards** generados dinámicamente desde la configuración de marca.
+- Keywords y `theme-color` personalizados por instancia.
+- `robots: noindex` por defecto (panel privado).
 
 ### Stack Tecnológico
 - **Frontend/Backend**: Next.js 16 (Turbopack)
 - **Base de Datos**: Local JSON Engine (Portabilidad extrema)
 - **Estilos**: TailwindCSS 4 + Lucide Icons
 - **Animaciones**: Framer Motion
-
-### Implementación de Seguridad
-- **Bcryptjs**: Contraseñas hasheadas con 10 rondas de salting.
-- **Persistencia**: Manejo de sesiones mediante `localStorage` de forma segura.
-- **Git Hygiene**: Archivos de datos de producción (`database.json`) y configuraciones de IA excluidos vía `.gitignore`.
 
 ---
 
