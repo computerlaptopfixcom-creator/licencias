@@ -464,7 +464,7 @@ export default function Dashboard() {
         <div className="mt-4 relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all font-bold text-white/40 hover:text-white hover:bg-white/5 active:scale-95"
+            className="w-full flex items-center justify-between px-5 py-4 rounded-2xl transition-all font-bold text-white/70 hover:text-white hover:bg-white/5 active:scale-95"
           >
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -489,10 +489,10 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col overflow-hidden flex-1">
             <span className="text-sm font-bold truncate group-hover:text-blue-400 transition-colors uppercase">{user.name}</span>
-            <span className="text-[11px] text-white/40 truncate">{user.email || user.role}</span>
+            <span className="text-[11px] text-white/60 truncate">{user.email || user.role}</span>
           </div>
           <button onClick={() => { setUser(null); localStorage.removeItem('session_user'); setActiveTab('dashboard'); }} className="p-2 hover:bg-red-500/20 rounded-xl transition-all group/logout">
-            <LogOut className="w-4 h-4 text-white/20 group-hover/logout:text-red-500" />
+            <LogOut className="w-4 h-4 text-white/50 group-hover/logout:text-red-500" />
           </button>
         </div>
       </aside>
@@ -509,7 +509,7 @@ export default function Dashboard() {
                 <Bell className="w-5 h-5 text-blue-500 fill-blue-500/20" />
                 <h3 className="font-black tracking-widest uppercase text-sm">Notificaciones</h3>
               </div>
-              <button onClick={() => setShowNotifications(false)} className="text-white/40 hover:text-white transition-colors">
+              <button onClick={() => setShowNotifications(false)} className="text-white/70 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -848,7 +848,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-left">
+                      <table className="w-full text-left whitespace-nowrap min-w-[600px]">
                         <thead>
                           <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
                             <th className="px-8 py-4">Producto</th>
@@ -964,7 +964,7 @@ export default function Dashboard() {
                       <h3 className="font-black text-xl tracking-tighter uppercase">Mis Licencias {userInventoryFilter !== 'all' && `- ${userInventoryFilter}`}</h3>
                     </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <table className="w-full text-left whitespace-nowrap min-w-[600px]">
                       <thead>
                         <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
                           <th className="px-8 py-4">Producto</th>
@@ -1043,7 +1043,7 @@ export default function Dashboard() {
                     </button>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <table className="w-full text-left whitespace-nowrap min-w-[600px]">
                       <thead>
                         <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
                           <th className="px-8 py-4">Usuario / Rol</th>
@@ -1104,7 +1104,7 @@ export default function Dashboard() {
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full text-left whitespace-nowrap min-w-[600px]">
                     <thead>
                       <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
                         <th className="px-8 py-4">Categoría</th>
@@ -1352,8 +1352,8 @@ export default function Dashboard() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 sm:p-8">
-                <div className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden">
-                  <table className="w-full text-left">
+                <div className="bg-[#111] border border-white/10 rounded-2xl overflow-x-auto">
+                  <table className="w-full text-left whitespace-nowrap min-w-[600px]">
                     <thead>
                       <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
                         <th className="px-6 py-4">Producto</th>
@@ -1472,14 +1472,14 @@ function ProductCard({ product, credits, onClick }: { product: string, credits: 
   );
 }
 
-function NavItem({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) {
+function NavItem({ active, icon: Icon, label, onClick }: { active: boolean, icon: any, label: string, onClick: () => void }) {
   return (
     <button onClick={onClick} className={cn(
-      "w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-bold group",
-      active ? "bg-blue-600 text-white shadow-xl shadow-blue-600/30" : "text-white/20 hover:text-white/60"
+      "w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-bold",
+      active ? "bg-white/10 text-white shadow-inner" : "text-white/70 hover:text-white hover:bg-white/5 active:scale-95"
     )}>
-      <Icon className="w-5 h-5" />
-      <span>{label}</span>
+      <Icon className={cn("w-5 h-5", active ? "text-blue-500" : "text-white/70 group-hover:text-white")} />
+      <span className="text-sm">{label}</span>
     </button>
   );
 }
