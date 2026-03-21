@@ -57,15 +57,24 @@ export default function Dashboard() {
   useEffect(() => {
     // Restore session from localStorage
     const savedUser = localStorage.getItem('session_user');
+    let currentUser = null;
     if (savedUser) {
       try {
-        const parsed = JSON.parse(savedUser);
-        setUser(parsed);
-        refreshData(parsed);
+        currentUser = JSON.parse(savedUser);
+        setUser(currentUser);
+        refreshData(currentUser);
       } catch(e) { localStorage.removeItem('session_user'); }
     }
-    refreshData();
+    refreshData(currentUser);
     refreshStats();
+
+    // Auto-refresh polling every 15 seconds
+    const interval = setInterval(() => {
+      refreshData(currentUser);
+      refreshStats();
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const refreshStats = async () => {
@@ -468,15 +477,32 @@ export default function Dashboard() {
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
-              {notifications.filter(n => !n.read).length === 0 ? (
-                <div className="text-center text-white/30 font-bold uppercase tracking-widest text-[10px] mt-10">
-                  No tienes notificaciones nuevas
+              {notifications.length === 0 ? (
+                <div className="text-center text-white/30 font-bold uppercase tracking-widest text-[10px] mt-10 px-8">
+                  No tienes notificaciones
                 </div>
               ) : (
-                [...notifications].filter(n => !n.read).reverse().map(n => (
-                  <div key={n.id} className="p-4 rounded-2xl border transition-colors bg-blue-500/10 border-blue-500/20">
-                    <p className="text-xs font-medium text-white/90 leading-snug mb-2">{n.message}</p>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{new Date(n.createdAt).toLocaleString()}</span>
+                [...notifications].reverse().slice(0, 20).map(n => (
+                  <div key={n.id} className={cn(
+                    "p-4 rounded-2xl border transition-all duration-300 relative overflow-hidden",
+                    !n.read ? "bg-blue-500/10 border-blue-500/20 shadow-lg shadow-blue-500/5 translate-x-1" : "bg-white/[0.02] border-white/5 opacity-60"
+                  )}>
+                    {!n.read && <div className="absolute top-4 right-4 w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-lg shadow-blue-500/50" />}
+                    <p className={cn(
+                      "text-xs leading-snug mb-2 pr-4",
+                      !n.read ? "font-bold text-white" : "font-medium text-white/50"
+                    )}>
+                      {n.message}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
+                        {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      <span className="w-1 h-1 bg-white/10 rounded-full" />
+                      <span className="text-[9px] font-bold text-white/20 capitalize">
+                        {new Date(n.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
                 ))
               )}
