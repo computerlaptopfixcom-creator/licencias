@@ -100,7 +100,16 @@ export default function Dashboard() {
       const catalog = await resCatalog.json();
       const notifs = resNotifs ? await resNotifs.json() : [];
       setDb({ users, licenses, requests, catalog: Array.isArray(catalog) ? catalog : [] });
-      setNotifications(Array.isArray(notifs) ? notifs : []);
+      
+      const newNotifs = Array.isArray(notifs) ? notifs : [];
+      setNotifications(prev => {
+        const prevUnread = prev.filter(n => !n.read).length;
+        const currentUnread = newNotifs.filter(n => !n.read).length;
+        if (currentUnread > prevUnread && prev.length > 0) {
+          triggerToast("¡Nueva notificación recibida!", "success");
+        }
+        return newNotifs;
+      });
     } catch (e) {
       console.error("Fetch error", e);
     }
