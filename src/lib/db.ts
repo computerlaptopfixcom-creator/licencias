@@ -297,6 +297,17 @@ export function createNotification(db: any, userId: string, message: string) {
     read: false,
     createdAt: new Date().toISOString()
   });
+
+  // Telegram Notifications Integration (Push to Admin)
+  if (userId === 'admin') {
+    const BOT_TOKEN = '8791883139:AAGDzkFsF4U4-K69FLqX0t8zAHH1pyGUUqw';
+    const CHAT_ID = '8111321819';
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: message })
+    }).catch(e => console.error('Telegram notification error:', e));
+  }
 }
 
 export function getNotifications(userId: string) {
