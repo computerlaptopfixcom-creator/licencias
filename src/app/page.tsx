@@ -153,7 +153,9 @@ export default function Dashboard() {
   };
 
   const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setShowToast({ show: true, message, type });
+    // Strip HTML for the toast display
+    const cleanMessage = message.replace(/<[^>]*>?/gm, '');
+    setShowToast({ show: true, message: cleanMessage, type });
     setTimeout(() => setShowToast({ show: false, message: '', type: 'success' }), 3000);
   };
 
@@ -675,12 +677,10 @@ export default function Dashboard() {
                     !n.read ? "bg-blue-500/10 border-blue-500/20 shadow-lg shadow-blue-500/5 translate-x-1" : "bg-white/[0.02] border-white/5 opacity-60"
                   )}>
                     {!n.read && <div className="absolute top-4 right-4 w-2 h-2 bg-blue-500 rounded-full animate-pulse shadow-lg shadow-blue-500/50" />}
-                    <p className={cn(
+                    <div className={cn(
                       "text-xs leading-snug mb-2 pr-4",
-                      !n.read ? "font-bold text-white" : "font-medium text-white/50"
-                    )}>
-                      {n.message}
-                    </p>
+                      !n.read ? "font-bold text-white" : "font-medium text-white/50 text-white/40"
+                    )} dangerouslySetInnerHTML={{ __html: n.message }} />
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
                         {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

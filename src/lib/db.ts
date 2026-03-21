@@ -235,7 +235,7 @@ export function assignLicensesBatch(userId: string, product: string, count: numb
   }
 
   if (assignedCount > 0) {
-    createNotification(db, userId, `📦 <b>LICENCIAS ASIGNADAS</b>: Te han asignado <b>${assignedCount} licencia(s)</b> de <b>${product}</b>.`);
+    createNotification(db, userId, `📦 <b>LICENCIAS ASIGNADAS</b>: Te han asignado <b>${assignedCount} licencia(s)</b> de <b>${product}</b>. ✅`);
     saveDb(db);
     return { success: true, count: assignedCount };
   }
@@ -265,7 +265,7 @@ export function revealLicense(userId: string, licenseId: string) {
     
     const user = db.users.find((u: any) => u.id === userId);
     const userName = user ? user.name : 'Un usuario';
-    createNotification(db, 'admin', `🔑 <b>LLAVE REVELADA</b>: ${userName} ha revelado una llave de <b>${license.product}</b>.`);
+    createNotification(db, 'admin', `🔑 <b>LLAVE REVELADA</b>: ${userName} ha revelado una llave de <b>${license.product}</b>. ✨`);
     
     saveDb(db);
     return { success: true, license };
@@ -284,7 +284,7 @@ export function reportFailedLicense(userId: string, licenseId: string) {
     const user = db.users.find((u: any) => u.id === userId);
     const userName = user ? user.name : 'Un usuario';
     
-    createNotification(db, 'admin', `🚨 <b>REPORTE DE FALLO</b>: ${userName} indicó que la llave de <b>${license.product}</b> (<code>${license.key}</code>) no funciona.`);
+    createNotification(db, 'admin', `🚨 <b>REPORTE DE FALLO</b>: ${userName} indicó que la llave de <b>${license.product}</b> (<code>${license.key}</code>) no funciona. 🛠️`);
     
     saveDb(db);
     return { success: true };
@@ -310,7 +310,7 @@ export function createRequest(userId: string, product: string, count: number = 1
   
   const user = db.users.find((u: any) => u.id === userId);
   const userName = user ? user.name : 'Un usuario';
-  createNotification(db, 'admin', `🆕 <b>NUEVA SOLICITUD</b>: ${userName} pide <b>${count}x ${product}</b>.`);
+  createNotification(db, 'admin', `🆕 <b>NUEVA SOLICITUD</b>: ${userName} pide <b>${count}x ${product}</b>. ⚡`);
   
   saveDb(db);
   return { success: true, request: newRequest };
