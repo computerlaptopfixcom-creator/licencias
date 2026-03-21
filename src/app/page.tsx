@@ -550,8 +550,37 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 p-4 sm:p-6 lg:p-12 overflow-auto relative z-10 bg-black/40 pb-24 lg:pb-12">
-        <header className="flex justify-between items-start sm:items-end mb-6 lg:mb-12 gap-4">
+      {/* Mobile Top App Bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5 z-[80] flex items-center justify-between px-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <ShieldCheck className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-black text-sm tracking-tight">MicroSec</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <Bell className="w-5 h-5 text-white/70" />
+            {notifications.filter(n => !n.read).length > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[#0a0a0a]" />
+            )}
+          </button>
+          
+          <button 
+            onClick={() => { setUser(null); localStorage.removeItem('session_user'); setActiveTab('dashboard'); }} 
+            className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400 font-bold border border-blue-500/20 hover:bg-red-500/20 hover:text-red-500 hover:border-red-500/20 transition-all"
+            title="Cerrar Sesión"
+          >
+            {user.name.charAt(0)}
+          </button>
+        </div>
+      </div>
+
+      <main className="flex-1 p-4 pt-20 sm:p-6 sm:pt-6 lg:p-12 overflow-auto relative z-10 bg-black/40 pb-24 lg:pb-12">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 lg:mb-12 gap-4">
           <div className="flex items-center gap-3">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -562,20 +591,20 @@ export default function Dashboard() {
                   {role === 'admin' ? 'Administrative Access' : 'Verified User'}
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight capitalize leading-none">
+              <h2 className="text-[1.35rem] sm:text-3xl lg:text-4xl font-extrabold tracking-tight capitalize leading-none mt-1">
                 {activeTab === 'dashboard' ? 'Centro de Operaciones' : activeTab === 'inventory' ? 'Inventario Global' : activeTab === 'users' ? 'Gestión de Usuarios' : activeTab === 'settings' ? 'Seguridad y Perfil' : activeTab === 'catalog' ? 'Catálogo de Productos' : activeTab}
               </h2>
             </div>
           </div>
           
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-2 flex gap-2">
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-2 flex gap-2 w-full sm:w-auto overflow-x-auto whitespace-nowrap scrollbar-hide">
              {role !== 'admin' && (
                <button className="px-4 py-2 text-sm font-bold text-white/60 hover:text-white transition-colors">Soporte</button>
              )}
              {role === 'admin' && activeTab === 'inventory' && (
                <button 
                  onClick={() => setBulkOpen(!bulkOpen)}
-                 className="px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-extrabold hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20 flex items-center gap-2"
+                 className="px-6 py-2 bg-blue-600 text-white rounded-xl text-xs sm:text-sm font-extrabold hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20 flex items-center gap-2 w-full justify-center sm:w-auto"
                >
                  <PlusCircle className="w-4 h-4" /> {bulkOpen ? 'Cerrar Cargador' : 'Cargar Inventario'}
                </button>
