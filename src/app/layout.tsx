@@ -12,10 +12,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Micro License System - Premium Software Keys",
-  description: "Advanced license management platform for Windows and Office keys.",
-};
+import { getSettings } from "@/lib/db";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = getSettings();
+  return {
+    title: `${settings.brandName || 'Micro License System'} - Premium Software Keys`,
+    description: settings.appDescription || "Advanced license management platform for Windows and Office keys.",
+  };
+}
 
 export default function RootLayout({
   children,

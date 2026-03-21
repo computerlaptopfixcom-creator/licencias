@@ -40,14 +40,35 @@ export function getDb() {
     const db = JSON.parse(data);
     if (!db.requests) db.requests = [];
     if (!db.notifications) db.notifications = [];
-    if (!db.settings) db.settings = { telegramBotToken: '', telegramChatId: '' };
+    if (!db.settings) db.settings = { 
+      telegramBotToken: '', 
+      telegramChatId: '',
+      brandName: 'Micro Licenses',
+      appDescription: 'Gestiona y adquiere tus llaves de software premium',
+      logoType: 'ShieldCheck',
+      primaryColor: '#3b82f6'
+    };
     if (!db.catalog || db.catalog.length === 0) {
       db.catalog = DEFAULT_CATALOG;
       saveDb(db);
     }
     return db;
   } catch (error) {
-    return { users: [], licenses: [], requests: [], notifications: [], catalog: DEFAULT_CATALOG, settings: { telegramBotToken: '', telegramChatId: '' } };
+    return { 
+      users: [], 
+      licenses: [], 
+      requests: [], 
+      notifications: [], 
+      catalog: DEFAULT_CATALOG, 
+      settings: { 
+        telegramBotToken: '', 
+        telegramChatId: '',
+        brandName: 'Micro Licenses',
+        appDescription: 'Gestiona y adquiere tus llaves de software premium',
+        logoType: 'ShieldCheck',
+        primaryColor: '#3b82f6'
+      } 
+    };
   }
 }
 
@@ -63,9 +84,16 @@ export function getSettings() {
   return getDb().settings;
 }
 
-export function updateSettings(telegramBotToken: string, telegramChatId: string) {
+export function updateSettings(data: { 
+  telegramBotToken?: string, 
+  telegramChatId?: string,
+  brandName?: string,
+  appDescription?: string,
+  logoType?: string,
+  primaryColor?: string
+}) {
   const db = getDb();
-  db.settings = { telegramBotToken, telegramChatId };
+  db.settings = { ...db.settings, ...data };
   saveDb(db);
   return { success: true };
 }

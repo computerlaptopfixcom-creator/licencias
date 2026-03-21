@@ -23,6 +23,7 @@ import {
   Menu
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import * as LucideIcons from 'lucide-react';
 
 // Catalog is now dynamic — loaded from database via /api/catalog
 
@@ -52,7 +53,14 @@ export default function Dashboard() {
   const [viewUserLicenses, setViewUserLicenses] = useState<{show: boolean, userId: string, userName: string}>({show: false, userId: '', userName: ''});
   const [userInventoryFilter, setUserInventoryFilter] = useState<'all' | string>('all');
   const [userSubFilter, setUserSubFilter] = useState<string | null>(null);
-  const [settings, setSettings] = useState({ telegramBotToken: '', telegramChatId: '' });
+  const [settings, setSettings] = useState({ 
+    telegramBotToken: '', 
+    telegramChatId: '',
+    brandName: 'Micro Licenses',
+    appDescription: 'Gestiona y adquiere tus llaves de software premium',
+    logoType: 'ShieldCheck',
+    primaryColor: '#3b82f6'
+  });
 
   useEffect(() => {
     // Restore session from localStorage
@@ -120,7 +128,14 @@ export default function Dashboard() {
       setDb({ users: Array.isArray(users) ? users : [], licenses: Array.isArray(licenses) ? licenses : [], requests: Array.isArray(requests) ? requests : [], catalog: Array.isArray(catalog) ? catalog : [] });
       if (resSettings && resSettings.ok) {
         const dataSettings = await resSettings.json();
-        setSettings({ telegramBotToken: dataSettings.telegramBotToken || '', telegramChatId: dataSettings.telegramChatId || '' });
+        setSettings({ 
+          telegramBotToken: dataSettings.telegramBotToken || '', 
+          telegramChatId: dataSettings.telegramChatId || '',
+          brandName: dataSettings.brandName || 'Micro Licenses',
+          appDescription: dataSettings.appDescription || 'Gestiona y adquiere tus llaves de software premium',
+          logoType: dataSettings.logoType || 'ShieldCheck',
+          primaryColor: dataSettings.primaryColor || '#3b82f6'
+        });
       }
       
       const newNotifs = Array.isArray(notifs) ? notifs : [];
@@ -164,20 +179,25 @@ export default function Dashboard() {
     }
   };
 
-  const saveTelegramSettings = async (telegramBotToken: string, telegramChatId: string) => {
+  const saveSettings = async (data: any) => {
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegramBotToken, telegramChatId })
+        body: JSON.stringify(data)
       });
       if (res.ok) {
-        triggerToast("Ajustes de Telegram guardados");
+        triggerToast("Ajustes guardados correctamente");
         refreshData();
       } else {
         triggerToast("Error al guardar ajustes", "error");
       }
     } catch(e) { triggerToast("Error de conexión", "error"); }
+  };
+
+  const LogoIcon = ({ className, size = 24, style }: { className?: string, size?: number, style?: React.CSSProperties }) => {
+    const Icon = (LucideIcons as any)[settings.logoType] || LucideIcons.ShieldCheck;
+    return <Icon className={className} size={size} style={style} />;
   };
   
   const createUser = async (name: string, password?: string) => {
@@ -353,11 +373,11 @@ export default function Dashboard() {
           className="w-full max-w-md bg-[#111] border border-white/10 rounded-3xl p-8 shadow-2xl space-y-8"
         >
           <div className="text-center space-y-2">
-            <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-              <ShieldCheck className="w-8 h-8 text-blue-500" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border" style={{ backgroundColor: `${settings.primaryColor}10`, borderColor: `${settings.primaryColor}30` }}>
+              <LogoIcon className="w-8 h-8" style={{ color: settings.primaryColor }} />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Micro Licenses</h1>
-            <p className="text-white/50 text-sm">Gestiona y adquiere tus llaves de software premium</p>
+            <h1 className="text-3xl font-bold tracking-tight">{settings.brandName}</h1>
+            <p className="text-white/50 text-sm">{settings.appDescription}</p>
           </div>
 
           <form onSubmit={(e) => {
@@ -374,7 +394,7 @@ export default function Dashboard() {
               <input required name="password" type="password" placeholder="••••••••" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500/50 transition-colors" />
             </div>
             
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-blue-600/20">
+            <button type="submit" className="w-full text-white font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-lg" style={{ backgroundColor: settings.primaryColor, boxShadow: `0 10px 15px -3px ${settings.primaryColor}30` }}>
               Entrar al Panel
             </button>
           </form>
@@ -427,31 +447,31 @@ export default function Dashboard() {
       <aside className="hidden lg:flex w-72 border-r border-white/5 bg-[#080808] p-8 flex-col gap-10 z-50 relative">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-              <ShieldCheck className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(to bottom right, ${settings.primaryColor}, ${settings.primaryColor}dd)`, boxShadow: `0 4px 6px -1px ${settings.primaryColor}30` }}>
+              <LogoIcon className="w-7 h-7 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-xl leading-tight">MicroSec</span>
-              <span className="text-[10px] text-blue-500 uppercase tracking-widest font-black">Licensing</span>
+              <span className="font-bold text-xl leading-tight truncate max-w-[140px]">{settings.brandName}</span>
+              <span className="text-[10px] uppercase tracking-widest font-black" style={{ color: settings.primaryColor }}>Sistema</span>
             </div>
           </div>
         </div>
 
         <nav className="flex-1 space-y-3">
-          <NavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => setActiveTab('dashboard')} />
+          <NavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => setActiveTab('dashboard')} color={settings.primaryColor} />
           {role === 'admin' ? (
             <>
-              <NavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} />
-              <NavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} />
-              <NavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} />
+              <NavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} color={settings.primaryColor} />
+              <NavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} color={settings.primaryColor} />
+              <NavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} color={settings.primaryColor} />
             </>
           ) : (
             <>
-              <NavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} />
+              <NavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} color={settings.primaryColor} />
             </>
           )}
           <div className="py-4"><div className="h-px bg-white/5 mx-2" /></div>
-          <NavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} />
+          <NavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} color={settings.primaryColor} />
         </nav>
 
         {/* Notifications Trigger */}
@@ -1404,52 +1424,102 @@ export default function Dashboard() {
             </AnimatePresence>
 
             {activeTab === 'settings' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div className="bg-[#111] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-10 max-w-2xl border-l-[6px] border-l-blue-600">
-                  <h3 className="text-3xl font-black mb-8 tracking-tighter uppercase">Seguridad y Cuenta</h3>
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const target = e.target as any;
-                    if (target.pass.value === target.conf.value) {
-                      changePassword(target.pass.value);
-                    } else triggerToast("Contraseñas no coinciden", "error");
-                  }} className="space-y-6">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Nueva Contraseña</label>
-                      <input name="pass" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors" />
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                  <div className="bg-[#111] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-10 border-l-[6px]" style={{ borderLeftColor: settings.primaryColor }}>
+                    <h3 className="text-3xl font-black mb-8 tracking-tighter uppercase">Seguridad y Cuenta</h3>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const target = e.target as any;
+                      if (target.pass.value === target.conf.value) {
+                        changePassword(target.pass.value);
+                      } else triggerToast("Contraseñas no coinciden", "error");
+                    }} className="space-y-6">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Nueva Contraseña</label>
+                        <input name="pass" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none transition-colors" style={{ outlineColor: settings.primaryColor }} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Confirmar Contraseña</label>
+                        <input name="conf" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none transition-colors" style={{ outlineColor: settings.primaryColor }} />
+                      </div>
+                      <button className="px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:opacity-90 transition-all shadow-lg" style={{ backgroundColor: settings.primaryColor, boxShadow: `0 10px 15px -3px ${settings.primaryColor}30` }}>Guardar Cambios</button>
+                    </form>
+                  </div>
+
+                  {role === 'admin' && (
+                    <div className="bg-[#111] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-10 border-l-[6px] border-l-[#0088cc]">
+                      <div className="flex items-center gap-4 mb-8">
+                        <div className="p-3 bg-[#0088cc]/10 rounded-2xl">
+                          <svg className="w-8 h-8 text-[#0088cc]" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                          </svg>
+                        </div>
+                        <h3 className="text-3xl font-black tracking-tighter uppercase">Integración Telegram</h3>
+                      </div>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const target = e.target as any;
+                        saveSettings({ telegramBotToken: target.botToken.value, telegramChatId: target.chatId.value });
+                      }} className="space-y-6">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Bot API Token</label>
+                          <input name="botToken" type="text" defaultValue={settings.telegramBotToken} placeholder="123456789:ABCdefGHIjklmNOPqrStuvwXYZ" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Admin Chat ID</label>
+                          <input name="chatId" type="text" defaultValue={settings.telegramChatId} placeholder="-100123456789" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
+                        </div>
+                        <button className="bg-[#0088cc] px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0077b3] transition-all shadow-lg shadow-[#0088cc]/20">Guardar API</button>
+                      </form>
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Confirmar Contraseña</label>
-                      <input name="conf" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors" />
-                    </div>
-                    <button className="bg-blue-600 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20">Guardar Cambios</button>
-                  </form>
+                  )}
                 </div>
 
                 {role === 'admin' && (
-                  <div className="bg-[#111] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-10 max-w-2xl border-l-[6px] border-l-[#0088cc]">
+                  <div className="bg-[#111] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-10 border-l-[6px]" style={{ borderLeftColor: settings.primaryColor }}>
                     <div className="flex items-center gap-4 mb-8">
-                      <div className="p-3 bg-[#0088cc]/10 rounded-2xl">
-                        <svg className="w-8 h-8 text-[#0088cc]" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
-                        </svg>
+                      <div className="p-3 bg-white/5 rounded-2xl">
+                        <LogoIcon className="w-8 h-8" style={{ color: settings.primaryColor }} />
                       </div>
-                      <h3 className="text-3xl font-black tracking-tighter uppercase">Integración Telegram</h3>
+                      <h3 className="text-3xl font-black tracking-tighter uppercase">Configuración de Marca</h3>
                     </div>
                     <form onSubmit={(e) => {
                       e.preventDefault();
                       const target = e.target as any;
-                      saveTelegramSettings(target.botToken.value, target.chatId.value);
+                      saveSettings({ 
+                        brandName: target.brandName.value, 
+                        appDescription: target.appDescription.value,
+                        logoType: target.logoType.value,
+                        primaryColor: target.primaryColor.value
+                      });
                     }} className="space-y-6">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Bot API Token</label>
-                        <input name="botToken" type="text" defaultValue={settings.telegramBotToken} placeholder="123456789:ABCdefGHIjklmNOPqrStuvwXYZ" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Nombre de la Marca</label>
+                          <input name="brandName" type="text" defaultValue={settings.brandName} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none transition-colors" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Color Primario</label>
+                          <div className="flex gap-2">
+                            <input name="primaryColor" type="color" defaultValue={settings.primaryColor} className="h-12 w-12 bg-transparent border-none p-0 cursor-pointer" />
+                            <input type="text" defaultValue={settings.primaryColor} className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none font-mono text-xs" disabled />
+                          </div>
+                        </div>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Admin Chat ID</label>
-                        <input name="chatId" type="text" defaultValue={settings.telegramChatId} placeholder="-100123456789" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Descripción de la App</label>
+                        <input name="appDescription" type="text" defaultValue={settings.appDescription} required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none transition-colors" />
                       </div>
-                      <button className="bg-[#0088cc] px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0077b3] transition-all shadow-lg shadow-[#0088cc]/20">Guardar API</button>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Icono del Logo</label>
+                        <select name="logoType" defaultValue={settings.logoType} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none transition-colors">
+                          {['ShieldCheck', 'Package', 'Users', 'Key', 'Settings', 'Bell', 'LayoutDashboard', 'Tag', 'DollarSign', 'PlusCircle', 'Globe', 'Zap', 'Cpu', 'Layers'].map(icon => (
+                            <option key={icon} value={icon} className="bg-[#111]">{icon}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <button className="px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:opacity-90 transition-all shadow-lg" style={{ backgroundColor: settings.primaryColor, boxShadow: `0 10px 15px -3px ${settings.primaryColor}30` }}>Guardar Marca</button>
                     </form>
                   </div>
                 )}
@@ -1461,18 +1531,18 @@ export default function Dashboard() {
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-[#0c0c0c] border-t border-white/5 lg:hidden flex items-center justify-around pb-safe h-16 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-        <MobileNavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => setActiveTab('dashboard')} />
+        <MobileNavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => setActiveTab('dashboard')} color={settings.primaryColor} />
         {role === 'admin' ? (
           <>
-            <MobileNavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} />
-            <MobileNavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} />
-            <MobileNavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} />
-            <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} />
+            <MobileNavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} color={settings.primaryColor} />
+            <MobileNavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} color={settings.primaryColor} />
+            <MobileNavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} color={settings.primaryColor} />
+            <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} color={settings.primaryColor} />
           </>
         ) : (
           <>
-            <MobileNavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} />
-            <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} />
+            <MobileNavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} color={settings.primaryColor} />
+            <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} color={settings.primaryColor} />
           </>
         )}
       </nav>
@@ -1612,25 +1682,25 @@ function ProductCard({ product, credits, onClick }: { product: string, credits: 
   );
 }
 
-function NavItem({ active, icon: Icon, label, onClick }: { active: boolean, icon: any, label: string, onClick: () => void }) {
+function NavItem({ active, icon: Icon, label, onClick, color }: { active: boolean, icon: any, label: string, onClick: () => void, color?: string }) {
   return (
     <button onClick={onClick} className={cn(
       "w-full flex items-center gap-4 px-5 py-4 rounded-xl sm:rounded-2xl transition-all font-bold",
       active ? "bg-white/10 text-white shadow-inner" : "text-white/70 hover:text-white hover:bg-white/5 active:scale-95"
     )}>
-      <Icon className={cn("w-5 h-5", active ? "text-blue-500" : "text-white/70 group-hover:text-white")} />
+      <Icon className={cn("w-5 h-5", active ? "text-blue-500" : "text-white/70 group-hover:text-white")} style={active && color ? { color } : {}} />
       <span className="text-sm">{label}</span>
     </button>
   );
 }
 
-function MobileNavItem({ active, icon: Icon, label, onClick }: { active: boolean, icon: any, label: string, onClick: () => void }) {
+function MobileNavItem({ active, icon: Icon, label, onClick, color }: { active: boolean, icon: any, label: string, onClick: () => void, color?: string }) {
   return (
     <button onClick={onClick} className={cn(
       "flex flex-col items-center justify-center w-full h-full transition-all gap-1 relative",
       active ? "text-blue-500" : "text-white/40 hover:text-white/70"
-    )}>
-      {active && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-blue-500 rounded-b-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
+    )} style={active && color ? { color } : {}}>
+      {active && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-b-full shadow-lg" style={{ backgroundColor: color || '#3b82f6', boxShadow: `0 0 10px ${color || '#3b82f6'}80` }} />}
       <Icon className={cn("w-5 h-5 flex-shrink-0 mt-1", active && "scale-110 drop-shadow-md")} />
       <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
     </button>
