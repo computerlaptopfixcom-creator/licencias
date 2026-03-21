@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [viewUserLicenses, setViewUserLicenses] = useState<{show: boolean, userId: string, userName: string}>({show: false, userId: '', userName: ''});
   const [userInventoryFilter, setUserInventoryFilter] = useState<'all' | string>('all');
   const [userSubFilter, setUserSubFilter] = useState<string | null>(null);
+  const [settings, setSettings] = useState({ telegramBotToken: '', telegramChatId: '' });
 
   useEffect(() => {
     // Restore session from localStorage
@@ -87,19 +88,31 @@ export default function Dashboard() {
 
   const refreshData = async (currentUser: any = user) => {
     try {
-      const [resUsers, resLicenses, resRequests, resCatalog, resNotifs] = await Promise.all([
+      const promises: any[] = [
         fetch('/api/users'),
         fetch('/api/licenses'),
         fetch('/api/requests'),
         fetch('/api/catalog'),
         currentUser ? fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.role === 'admin' ? 'admin' : currentUser.id })}) : Promise.resolve(null)
-      ]);
+      ];
+      if (currentUser?.role === 'admin') {
+        promises.push(fetch('/api/settings'));
+      }
+      
+      const results = await Promise.all(promises);
+      const [resUsers, resLicenses, resRequests, resCatalog, resNotifs] = results;
+      const resSettings = currentUser?.role === 'admin' ? results[5] : null;
+
       const users = await resUsers.json();
       const licenses = await resLicenses.json();
       const requests = await resRequests.json();
       const catalog = await resCatalog.json();
       const notifs = resNotifs ? await resNotifs.json() : [];
       setDb({ users, licenses, requests, catalog: Array.isArray(catalog) ? catalog : [] });
+      if (resSettings) {
+        const dataSettings = await resSettings.json();
+        setSettings({ telegramBotToken: dataSettings.telegramBotToken || '', telegramChatId: dataSettings.telegramChatId || '' });
+      }
       
       const newNotifs = Array.isArray(notifs) ? notifs : [];
       setNotifications(prev => {
@@ -142,6 +155,22 @@ export default function Dashboard() {
     }
   };
 
+  const saveTelegramSettings = async (telegramBotToken: string, telegramChatId: string) => {
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramBotToken, telegramChatId })
+      });
+      if (res.ok) {
+        triggerToast("Ajustes de Telegram guardados");
+        refreshData();
+      } else {
+        triggerToast("Error al guardar ajustes", "error");
+      }
+    } catch(e) { triggerToast("Error de conexión", "error"); }
+  };
+  
   const createUser = async (name: string, password?: string) => {
     try {
       const res = await fetch('/api/users', {
@@ -1254,25 +1283,55 @@ export default function Dashboard() {
             </AnimatePresence>
 
             {activeTab === 'settings' && (
-              <div className="bg-[#111] border border-white/10 rounded-3xl p-10 max-w-2xl border-l-[6px] border-l-blue-600">
-                <h3 className="text-3xl font-black mb-8 tracking-tighter uppercase">Seguridad y Cuenta</h3>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const target = e.target as any;
-                  if (target.pass.value === target.conf.value) {
-                    changePassword(target.pass.value);
-                  } else triggerToast("Contraseñas no coinciden", "error");
-                }} className="space-y-6">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Nueva Contraseña</label>
-                    <input name="pass" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <div className="bg-[#111] border border-white/10 rounded-3xl p-10 max-w-2xl border-l-[6px] border-l-blue-600">
+                  <h3 className="text-3xl font-black mb-8 tracking-tighter uppercase">Seguridad y Cuenta</h3>
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const target = e.target as any;
+                    if (target.pass.value === target.conf.value) {
+                      changePassword(target.pass.value);
+                    } else triggerToast("Contraseñas no coinciden", "error");
+                  }} className="space-y-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Nueva Contraseña</label>
+                      <input name="pass" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Confirmar Contraseña</label>
+                      <input name="conf" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors" />
+                    </div>
+                    <button className="bg-blue-600 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20">Guardar Cambios</button>
+                  </form>
+                </div>
+
+                {role === 'admin' && (
+                  <div className="bg-[#111] border border-white/10 rounded-3xl p-10 max-w-2xl border-l-[6px] border-l-[#0088cc]">
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="p-3 bg-[#0088cc]/10 rounded-2xl">
+                        <svg className="w-8 h-8 text-[#0088cc]" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                        </svg>
+                      </div>
+                      <h3 className="text-3xl font-black tracking-tighter uppercase">Integración Telegram</h3>
+                    </div>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const target = e.target as any;
+                      saveTelegramSettings(target.botToken.value, target.chatId.value);
+                    }} className="space-y-6">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Bot API Token</label>
+                        <input name="botToken" type="text" defaultValue={settings.telegramBotToken} placeholder="123456789:ABCdefGHIjklmNOPqrStuvwXYZ" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Admin Chat ID</label>
+                        <input name="chatId" type="text" defaultValue={settings.telegramChatId} placeholder="-100123456789" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
+                      </div>
+                      <button className="bg-[#0088cc] px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0077b3] transition-all shadow-lg shadow-[#0088cc]/20">Guardar API</button>
+                    </form>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Confirmar Contraseña</label>
-                    <input name="conf" type="password" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors" />
-                  </div>
-                  <button className="bg-blue-600 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20">Guardar Cambios</button>
-                </form>
+                )}
               </div>
             )}
           </motion.div>

@@ -40,13 +40,14 @@ export function getDb() {
     const db = JSON.parse(data);
     if (!db.requests) db.requests = [];
     if (!db.notifications) db.notifications = [];
+    if (!db.settings) db.settings = { telegramBotToken: '', telegramChatId: '' };
     if (!db.catalog || db.catalog.length === 0) {
       db.catalog = DEFAULT_CATALOG;
       saveDb(db);
     }
     return db;
   } catch (error) {
-    return { users: [], licenses: [], requests: [], notifications: [], catalog: DEFAULT_CATALOG };
+    return { users: [], licenses: [], requests: [], notifications: [], catalog: DEFAULT_CATALOG, settings: { telegramBotToken: '', telegramChatId: '' } };
   }
 }
 
@@ -56,6 +57,17 @@ export function saveDb(data: any) {
   } catch (error) {
     console.error('Error saving db:', error);
   }
+}
+
+export function getSettings() {
+  return getDb().settings;
+}
+
+export function updateSettings(telegramBotToken: string, telegramChatId: string) {
+  const db = getDb();
+  db.settings = { telegramBotToken, telegramChatId };
+  saveDb(db);
+  return { success: true };
 }
 
 export function getLicenses() {
@@ -299,13 +311,11 @@ export function createNotification(db: any, userId: string, message: string) {
   });
 
   // Telegram Notifications Integration (Push to Admin)
-  if (userId === 'admin') {
-    const BOT_TOKEN = '8791883139:AAGDzkFsF4U4-K69FLqX0t8zAHH1pyGUUqw';
-    const CHAT_ID = '8111321819';
-    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+  if (userId === 'admin' && db.settings?.telegramBotToken && db.settings?.telegramChatId) {
+    fetch(`https://api.telegram.org/bot${db.settings.telegramBotToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: CHAT_ID, text: message })
+      body: JSON.stringify({ chat_id: db.settings.telegramChatId, text: message })
     }).catch(e => console.error('Telegram notification error:', e));
   }
 }
