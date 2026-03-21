@@ -606,7 +606,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="flex-1 p-4 pt-20 sm:p-6 sm:pt-6 lg:p-12 overflow-auto relative z-10 bg-black/40 pb-24 lg:pb-12">
+      <main className="flex-1 p-4 pt-20 sm:p-6 sm:pt-6 lg:p-12 overflow-auto relative z-10 bg-black/40 pb-40 lg:pb-12">
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 lg:mb-12 gap-4">
           <div className="flex items-center gap-3">
             <div>
@@ -1523,6 +1523,8 @@ export default function Dashboard() {
                     </form>
                   </div>
                 )}
+                {/* Mobile Spacer */}
+                <div className="h-20 lg:hidden" />
               </div>
             )}
           </motion.div>
