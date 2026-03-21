@@ -49,7 +49,8 @@ export default function Dashboard() {
 
   const [stats, setStats] = useState<any>(null);
   const [inventoryFilter, setInventoryFilter] = useState<'all' | string>('all');
-  const [inventoryStatusFilter, setInventoryStatusFilter] = useState<'available' | 'assigned'>('available');
+  const [inventoryStatusFilter, setInventoryStatusFilter] = useState<'available' | 'assigned' | 'reported'>('available');
+  const [viewUserLicenses, setViewUserLicenses] = useState<{show: boolean, userId: string, userName: string}>({show: false, userId: '', userName: ''});
   const [userInventoryFilter, setUserInventoryFilter] = useState<'all' | string>('all');
   const [userSubFilter, setUserSubFilter] = useState<string | null>(null);
 
@@ -350,7 +351,8 @@ export default function Dashboard() {
 
   const role = user.role;
   const availableLicenses = db.licenses.filter(l => l.status === 'available').length;
-  const assignedLicenses = db.licenses.filter(l => l.status === 'assigned').length;
+  const assignedLicenses = db.licenses.filter(l => l.status === 'assigned' && !l.reportedFailed).length;
+  const reportedLicensesCount = db.licenses.filter(l => l.reportedFailed).length;
 
   return (
     <div className="h-screen overflow-hidden bg-[#050505] text-white flex font-sans relative">
@@ -753,20 +755,26 @@ export default function Dashboard() {
 
                   {/* Status Toggle */}
                   <div className="flex bg-[#111] border border-white/10 rounded-2xl p-1.5 shrink-0">
-                    <button 
-                      onClick={() => setInventoryStatusFilter('available')}
-                      className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", inventoryStatusFilter === 'available' ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-white/40 hover:text-white")}
-                    >
-                      🟢 Disponibles
-                    </button>
-                    <button 
-                      onClick={() => setInventoryStatusFilter('assigned')}
-                      className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", inventoryStatusFilter === 'assigned' ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-white/40 hover:text-white")}
-                    >
-                      📦 Asignadas
-                    </button>
-                  </div>
-                </div>
+                     <button 
+                       onClick={() => setInventoryStatusFilter('available')}
+                       className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", inventoryStatusFilter === 'available' ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-white/40 hover:text-white")}
+                     >
+                       🟢 Disponibles ({availableLicenses})
+                     </button>
+                     <button 
+                       onClick={() => setInventoryStatusFilter('assigned')}
+                       className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", inventoryStatusFilter === 'assigned' ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "text-white/40 hover:text-white")}
+                     >
+                       📦 Asignadas ({assignedLicenses})
+                     </button>
+                     <button 
+                       onClick={() => setInventoryStatusFilter('reported')}
+                       className={cn("px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", inventoryStatusFilter === 'reported' ? "bg-red-600 text-white shadow-lg shadow-red-600/20" : "text-white/40 hover:text-red-500/60")}
+                     >
+                       ⚠️ Reportadas ({reportedLicensesCount})
+                     </button>
+                   </div>
+                 </div>
 
                 <div className="bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
                     <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
@@ -791,20 +799,28 @@ export default function Dashboard() {
                             )}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
-                          {db.licenses
-                            .filter(l => l.status === inventoryStatusFilter)
-                            .filter(l => {
-                              if (inventoryFilter === 'all') return true;
-                              // Check if the license product belongs to the selected category
-                              return PRODUCT_CATALOG[inventoryFilter as keyof typeof PRODUCT_CATALOG]?.includes(l.product);
-                            })
+                         <tbody className="divide-y divide-white/5">
+                           {db.licenses
+                             .filter(l => {
+                               if (inventoryStatusFilter === 'reported') return l.reportedFailed;
+                               if (inventoryStatusFilter === 'assigned') return l.status === 'assigned' && !l.reportedFailed;
+                               return l.status === 'available';
+                             })
+                             .filter(l => {
+                               if (inventoryFilter === 'all') return true;
+                               return PRODUCT_CATALOG[inventoryFilter as keyof typeof PRODUCT_CATALOG]?.includes(l.product);
+                             })
                             .map(l => {
-                              const assignedUser = inventoryStatusFilter === 'assigned' ? db.users.find(u => u.id === l.assignedTo) : null;
+                               const assignedUser = (inventoryStatusFilter === 'assigned' || inventoryStatusFilter === 'reported') ? db.users.find(u => u.id === l.assignedTo) : null;
                               return (
-                                <tr key={l.id} className="group hover:bg-white/[0.01]">
-                                  <td className="px-8 py-5 font-bold text-white/90">{l.product}</td>
-                                  <td className="px-8 py-5 font-mono text-xs text-blue-400/80">{l.key}</td>
+                                 <tr key={l.id} className="group hover:bg-white/[0.01]">
+                                   <td className="px-8 py-5 font-bold text-white/90">
+                                     <div className="flex items-center gap-2">
+                                       {l.product}
+                                       {l.reportedFailed && <span className="text-[9px] bg-red-500/10 text-red-500 border border-red-500/20 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">⚠️ Fallida</span>}
+                                     </div>
+                                   </td>
+                                   <td className="px-8 py-5 font-mono text-xs text-blue-400/80">{l.key}</td>
                                   {inventoryStatusFilter === 'available' ? (
                                     <td className="px-8 py-5 text-white/40 text-xs italic">{l.batchNote || '—'}</td>
                                   ) : (
@@ -987,12 +1003,20 @@ export default function Dashboard() {
                               </td>
                               <td className="px-8 py-5 font-mono text-xs">{userLicenses} keys active</td>
                               <td className="px-8 py-5 text-right">
-                                <button 
-                                  onClick={() => setShowAssignModal({show: true, userId: u.id, userName: u.name})}
-                                  className="px-4 py-2 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95"
-                                >
-                                  Asignar Lote
-                                </button>
+                                 <div className="flex justify-end gap-2">
+                                  <button 
+                                    onClick={() => setViewUserLicenses({show: true, userId: u.id, userName: u.name})}
+                                    className="px-4 py-2 bg-white/5 text-white/40 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                                  >
+                                    Ver Llaves
+                                  </button>
+                                  <button 
+                                    onClick={() => setShowAssignModal({show: true, userId: u.id, userName: u.name})}
+                                    className="px-4 py-2 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95"
+                                  >
+                                    Asignar Lote
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -1219,6 +1243,60 @@ export default function Dashboard() {
           </motion.div>
         </AnimatePresence>
       </main>
+      {/* Ver Llaves del Usuario Modal */}
+      <AnimatePresence>
+        {viewUserLicenses.show && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setViewUserLicenses({show: false, userId: '', userName: ''})} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                <div>
+                  <h3 className="text-2xl font-black tracking-tighter uppercase">Llaves de {viewUserLicenses.userName}</h3>
+                  <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">Historial de licencias asignadas</p>
+                </div>
+                <button onClick={() => setViewUserLicenses({show: false, userId: '', userName: ''})} className="p-2 hover:bg-white/10 rounded-xl transition-colors"><X className="w-6 h-6 text-white/40" /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+                <div className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
+                        <th className="px-6 py-4">Producto</th>
+                        <th className="px-6 py-4">Key</th>
+                        <th className="px-6 py-4">Estado</th>
+                        <th className="px-6 py-4">Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {db.licenses.filter(l => l.assignedTo === viewUserLicenses.userId).length === 0 ? (
+                        <tr><td colSpan={4} className="px-6 py-10 text-center text-white/20 text-xs font-bold uppercase">No hay llaves asignadas</td></tr>
+                      ) : (
+                        db.licenses.filter(l => l.assignedTo === viewUserLicenses.userId).map(l => (
+                          <tr key={l.id} className="hover:bg-white/[0.02] transition-colors">
+                            <td className="px-6 py-4 text-xs font-bold">{l.product}</td>
+                            <td className="px-6 py-4 font-mono text-[10px] text-blue-400">{l.key}</td>
+                            <td className="px-6 py-4">
+                              {l.reportedFailed ? (
+                                <span className="text-[9px] bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded font-black uppercase tracking-tighter flex items-center gap-1 w-fit">⚠️ FALLIDA</span>
+                              ) : l.claimed ? (
+                                <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-black uppercase tracking-tighter flex items-center gap-1 w-fit">✅ REVELADA</span>
+                              ) : (
+                                <span className="text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-black uppercase tracking-tighter flex items-center gap-1 w-fit">📦 ASIGNADA</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-[10px] text-white/30">{new Date(l.assignedAt || l.createdAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Request License Modal */}
       <AnimatePresence>
