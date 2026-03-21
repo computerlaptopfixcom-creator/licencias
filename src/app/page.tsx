@@ -62,7 +62,6 @@ export default function Dashboard() {
       try {
         currentUser = JSON.parse(savedUser);
         setUser(currentUser);
-        refreshData(currentUser);
       } catch(e) { localStorage.removeItem('session_user'); }
     }
     refreshData(currentUser);
@@ -80,6 +79,7 @@ export default function Dashboard() {
   const refreshStats = async () => {
     try {
       const res = await fetch('/api/stats');
+      if (!res.ok) return;
       const data = await res.json();
       setStats(data);
     } catch (e) {}
@@ -102,13 +102,23 @@ export default function Dashboard() {
       const [resUsers, resLicenses, resRequests, resCatalog, resNotifs] = results;
       const resSettings = currentUser?.role === 'admin' ? results[5] : null;
 
-      const users = await resUsers.json();
-      const licenses = await resLicenses.json();
-      const requests = await resRequests.json();
-      const catalog = await resCatalog.json();
-      const notifs = resNotifs ? await resNotifs.json() : [];
-      setDb({ users, licenses, requests, catalog: Array.isArray(catalog) ? catalog : [] });
-      if (resSettings) {
+      // If any core endpoint returns 401, session is invalid — auto logout
+      if (resUsers.status === 401 || resLicenses.status === 401) {
+        if (currentUser) {
+          setUser(null);
+          localStorage.removeItem('session_user');
+        }
+        return;
+      }
+
+      // Only parse if responses are OK
+      const users = resUsers.ok ? await resUsers.json() : [];
+      const licenses = resLicenses.ok ? await resLicenses.json() : [];
+      const requests = resRequests.ok ? await resRequests.json() : [];
+      const catalog = resCatalog.ok ? await resCatalog.json() : [];
+      const notifs = resNotifs && resNotifs.ok ? await resNotifs.json() : [];
+      setDb({ users: Array.isArray(users) ? users : [], licenses: Array.isArray(licenses) ? licenses : [], requests: Array.isArray(requests) ? requests : [], catalog: Array.isArray(catalog) ? catalog : [] });
+      if (resSettings && resSettings.ok) {
         const dataSettings = await resSettings.json();
         setSettings({ telegramBotToken: dataSettings.telegramBotToken || '', telegramChatId: dataSettings.telegramChatId || '' });
       }
