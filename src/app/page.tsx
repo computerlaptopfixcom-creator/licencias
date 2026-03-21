@@ -1619,8 +1619,30 @@ export default function Dashboard() {
                           <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Admin Chat ID</label>
                           <input name="chatId" type="text" defaultValue={settings.telegramChatId} placeholder="-100123456789" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
                         </div>
-                        <button className="bg-[#0088cc] px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0077b3] transition-all shadow-lg shadow-[#0088cc]/20">Guardar API</button>
+                        <button type="submit" className="bg-[#0088cc] px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0077b3] transition-all shadow-lg shadow-[#0088cc]/20">Guardar API</button>
                       </form>
+                      <div className="mt-6 pt-6 border-t border-white/10">
+                        <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-3">Bot Interactivo</p>
+                        <p className="text-xs text-white/40 mb-4">Activa el webhook para que tu bot responda a comandos como /stock, /stats y /requests directamente en Telegram.</p>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('/api/telegram/setup', { method: 'POST' });
+                              const data = await res.json();
+                              if (res.ok) {
+                                triggerToast(`✅ Bot activado: ${data.webhookUrl}`, 'success');
+                              } else {
+                                triggerToast(data.error || 'Error al activar', 'error');
+                              }
+                            } catch {
+                              triggerToast('Error de conexión', 'error');
+                            }
+                          }}
+                          className="bg-[#0088cc]/20 border border-[#0088cc]/30 px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] text-[#0088cc] hover:bg-[#0088cc]/30 transition-all"
+                        >
+                          🤖 Activar Bot Interactivo
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -85,6 +85,26 @@ El sistema incluye un flujo de **configuración obligatoria** para el administra
 
 ---
 
+## 🤖 Bot de Telegram Interactivo
+
+El bot no solo envía notificaciones — ahora responde a comandos directamente desde Telegram:
+
+| Comando | Descripción |
+|---------|-------------|
+| `/start` | Mensaje de bienvenida y lista de comandos |
+| `/stock` | Inventario de llaves disponibles por producto |
+| `/stats` | Estadísticas generales (usuarios, licencias, solicitudes) |
+| `/requests` | Solicitudes pendientes |
+| `/users` | Lista de usuarios registrados |
+| `/help` | Ayuda y lista de comandos |
+
+### Activación
+1. Configura el **Bot Token** y **Chat ID** en Ajustes > Integración Telegram.
+2. Haz clic en **🤖 Activar Bot Interactivo**.
+3. ¡Listo! Escribe `/start` en tu bot de Telegram.
+
+---
+
 ## 💻 Desarrollo Local
 
 ```bash
