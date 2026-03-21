@@ -36,7 +36,6 @@ export default function Dashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showCatalogModal, setShowCatalogModal] = useState<{show: boolean, mode: 'create'|'edit', item?: any}>({show: false, mode: 'create'});
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Derive PRODUCT_CATALOG and PRODUCT_PRICES from db.catalog
   const PRODUCT_CATALOG: Record<string, string[]> = {};
@@ -418,16 +417,7 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      <aside className={cn(
-        "w-72 border-r border-white/5 bg-[#080808] p-8 flex flex-col gap-10 z-50",
-        "fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      <aside className="hidden lg:flex w-72 border-r border-white/5 bg-[#080808] p-8 flex-col gap-10 z-50 relative">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -438,26 +428,23 @@ export default function Dashboard() {
               <span className="text-[10px] text-blue-500 uppercase tracking-widest font-black">Licensing</span>
             </div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-white/10 rounded-xl">
-            <X className="w-5 h-5 text-white/40" />
-          </button>
         </div>
 
         <nav className="flex-1 space-y-3">
-          <NavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} />
+          <NavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => setActiveTab('dashboard')} />
           {role === 'admin' ? (
             <>
-              <NavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => { setActiveTab('inventory'); setSidebarOpen(false); }} />
-              <NavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => { setActiveTab('users'); setSidebarOpen(false); }} />
-              <NavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => { setActiveTab('catalog'); setSidebarOpen(false); }} />
+              <NavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} />
+              <NavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} />
+              <NavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} />
             </>
           ) : (
             <>
-              <NavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => { setActiveTab('my-keys'); setSidebarOpen(false); }} />
+              <NavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} />
             </>
           )}
           <div className="py-4"><div className="h-px bg-white/5 mx-2" /></div>
-          <NavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} />
+          <NavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} />
         </nav>
 
         {/* Notifications Trigger */}
@@ -566,9 +553,6 @@ export default function Dashboard() {
       <main className="flex-1 p-4 sm:p-6 lg:p-12 overflow-auto relative z-10 bg-black/40 pb-24 lg:pb-12">
         <header className="flex justify-between items-start sm:items-end mb-6 lg:mb-12 gap-4">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 hover:bg-white/10 rounded-xl transition-all">
-              <Menu className="w-6 h-6" />
-            </button>
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className={cn(
@@ -841,7 +825,7 @@ export default function Dashboard() {
                  </div>
 
                 <div className="bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                    <div className="p-5 sm:p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-500/10 rounded-lg"><Package className="w-5 h-5 text-blue-500" /></div>
                         <h3 className="font-black text-xl tracking-tighter uppercase">Inventario: {inventoryFilter === 'all' ? 'Completo' : inventoryFilter}</h3>
@@ -960,7 +944,7 @@ export default function Dashboard() {
                 )}
 
                 <div className="bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="p-8 border-b border-white/10 bg-white/[0.02]">
+                    <div className="p-5 sm:p-8 border-b border-white/10 bg-white/[0.02]">
                       <h3 className="font-black text-xl tracking-tighter uppercase">Mis Licencias {userInventoryFilter !== 'all' && `- ${userInventoryFilter}`}</h3>
                     </div>
                   <div className="overflow-x-auto">
@@ -1029,7 +1013,7 @@ export default function Dashboard() {
 
             {activeTab === 'users' && role === 'admin' && (
               <div className="bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                  <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                  <div className="p-5 sm:p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
                     <div className="flex items-center gap-3">
                        <div className="p-2 bg-blue-500/10 rounded-lg"><Users className="w-5 h-5 text-blue-500" /></div>
                        <h3 className="font-black text-xl tracking-tighter uppercase">Usuarios Autorizados</h3>
@@ -1093,7 +1077,7 @@ export default function Dashboard() {
 
             {activeTab === 'catalog' && role === 'admin' && (
               <div className="bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                <div className="p-5 sm:p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-500/10 rounded-lg"><Tag className="w-5 h-5 text-emerald-500" /></div>
                     <h3 className="font-black text-xl tracking-tighter uppercase">Catálogo de Productos</h3>
@@ -1168,7 +1152,7 @@ export default function Dashboard() {
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCatalogModal({show: false, mode: 'create'})} className="absolute inset-0 bg-black/90 backdrop-blur-md" />
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                    className="relative w-full max-w-md bg-[#0d0d0d] border border-white/10 rounded-[3rem] p-10 shadow-4xl text-center"
+                    className="relative w-full max-w-md bg-[#0d0d0d] border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 shadow-4xl text-center"
                   >
                     <div className="w-16 h-16 bg-emerald-600/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
                       <DollarSign className="w-8 h-8 text-emerald-500" />
@@ -1237,7 +1221,7 @@ export default function Dashboard() {
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAssignModal({show: false, userId: '', userName: ''})} className="absolute inset-0 bg-black/90 backdrop-blur-md" />
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                    className="relative w-full max-w-md bg-[#0d0d0d] border border-white/10 rounded-[3rem] p-10 shadow-4xl text-center"
+                    className="relative w-full max-w-md bg-[#0d0d0d] border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 shadow-4xl text-center"
                   >
                     <div className="w-16 h-16 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-500/20">
                       <Key className="w-8 h-8 text-blue-500" />
@@ -1284,7 +1268,7 @@ export default function Dashboard() {
 
             {activeTab === 'settings' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div className="bg-[#111] border border-white/10 rounded-3xl p-10 max-w-2xl border-l-[6px] border-l-blue-600">
+                <div className="bg-[#111] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-10 max-w-2xl border-l-[6px] border-l-blue-600">
                   <h3 className="text-3xl font-black mb-8 tracking-tighter uppercase">Seguridad y Cuenta</h3>
                   <form onSubmit={(e) => {
                     e.preventDefault();
@@ -1306,7 +1290,7 @@ export default function Dashboard() {
                 </div>
 
                 {role === 'admin' && (
-                  <div className="bg-[#111] border border-white/10 rounded-3xl p-10 max-w-2xl border-l-[6px] border-l-[#0088cc]">
+                  <div className="bg-[#111] border border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-10 max-w-2xl border-l-[6px] border-l-[#0088cc]">
                     <div className="flex items-center gap-4 mb-8">
                       <div className="p-3 bg-[#0088cc]/10 rounded-2xl">
                         <svg className="w-8 h-8 text-[#0088cc]" viewBox="0 0 24 24" fill="currentColor">
@@ -1337,13 +1321,32 @@ export default function Dashboard() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-[#0c0c0c] border-t border-white/5 lg:hidden flex items-center justify-around pb-safe h-16 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <MobileNavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => setActiveTab('dashboard')} />
+        {role === 'admin' ? (
+          <>
+            <MobileNavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} />
+            <MobileNavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} />
+            <MobileNavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} />
+            <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} />
+          </>
+        ) : (
+          <>
+            <MobileNavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} />
+            <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} />
+          </>
+        )}
+      </nav>
+
       {/* Ver Llaves del Usuario Modal */}
       <AnimatePresence>
         {viewUserLicenses.show && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setViewUserLicenses({show: false, userId: '', userName: ''})} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
             <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+              <div className="p-5 sm:p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
                 <div>
                   <h3 className="text-2xl font-black tracking-tighter uppercase">Llaves de {viewUserLicenses.userName}</h3>
                   <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mt-1">Historial de licencias asignadas</p>
@@ -1401,7 +1404,7 @@ export default function Dashboard() {
           >
             <motion.div 
               initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }}
-              className="bg-[#0d0d0d] border border-white/10 rounded-[3rem] p-10 w-full max-w-md shadow-4xl relative"
+              className="bg-[#0d0d0d] border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 w-full max-w-md shadow-4xl relative"
             >
               <button onClick={() => setShowRequestModal(false)} className="absolute top-8 right-8 text-white/40 hover:text-white transition-colors bg-white/5 p-2 rounded-full">
                 <X className="w-5 h-5" />
@@ -1475,11 +1478,24 @@ function ProductCard({ product, credits, onClick }: { product: string, credits: 
 function NavItem({ active, icon: Icon, label, onClick }: { active: boolean, icon: any, label: string, onClick: () => void }) {
   return (
     <button onClick={onClick} className={cn(
-      "w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all font-bold",
+      "w-full flex items-center gap-4 px-5 py-4 rounded-xl sm:rounded-2xl transition-all font-bold",
       active ? "bg-white/10 text-white shadow-inner" : "text-white/70 hover:text-white hover:bg-white/5 active:scale-95"
     )}>
       <Icon className={cn("w-5 h-5", active ? "text-blue-500" : "text-white/70 group-hover:text-white")} />
       <span className="text-sm">{label}</span>
+    </button>
+  );
+}
+
+function MobileNavItem({ active, icon: Icon, label, onClick }: { active: boolean, icon: any, label: string, onClick: () => void }) {
+  return (
+    <button onClick={onClick} className={cn(
+      "flex flex-col items-center justify-center w-full h-full transition-all gap-1 relative",
+      active ? "text-blue-500" : "text-white/40 hover:text-white/70"
+    )}>
+      {active && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-blue-500 rounded-b-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />}
+      <Icon className={cn("w-5 h-5 flex-shrink-0 mt-1", active && "scale-110 drop-shadow-md")} />
+      <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
     </button>
   );
 }
