@@ -41,8 +41,17 @@ export async function POST(request: Request) {
     const { password: _, ...safeUser } = user;
     
     // Sign JWT and set httpOnly cookie
-    const token = signToken({ userId: user.id, role: user.role, name: user.name });
-    const response = NextResponse.json(safeUser);
+    const token = signToken({ 
+      userId: user.id, 
+      role: user.role, 
+      name: user.name,
+      mustChangeCredentials: !!user.mustChangeCredentials 
+    });
+
+    const response = NextResponse.json({
+      ...safeUser,
+      mustChangeCredentials: !!user.mustChangeCredentials
+    });
     setAuthCookie(response, token);
     
     return response;

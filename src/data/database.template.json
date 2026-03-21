@@ -6,10 +6,20 @@
       "name": "admin",
       "password": "$2b$10$2g7Bf5csv2F9YQlsNq6oru2sJOsLugBluh8nEtDTPaDwHFJmpIJJq",
       "role": "admin",
+      "mustChangeCredentials": true,
       "createdAt": "2026-01-01T00:00:00.000Z"
     }
   ],
   "licenses": [],
   "requests": [],
-  "notifications": []
+  "notifications": [],
+  "catalog": [],
+  "settings": {
+    "telegramBotToken": "",
+    "telegramChatId": "",
+    "brandName": "Micro Licenses",
+    "appDescription": "Gestiona y adquiere tus llaves de software premium",
+    "logoType": "ShieldCheck",
+    "primaryColor": "#3b82f6"
+  }
 }

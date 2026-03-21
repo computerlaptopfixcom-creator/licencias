@@ -10,12 +10,13 @@ interface TokenPayload {
   userId: string;
   role: 'admin' | 'user';
   name: string;
+  mustChangeCredentials?: boolean;
   iat: number;
   exp: number;
 }
 
 // Simple HMAC-based token (no external JWT library needed)
-export function signToken(payload: { userId: string; role: string; name: string }): string {
+export function signToken(payload: { userId: string; role: string; name: string; mustChangeCredentials?: boolean }): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const now = Date.now();
   const body = Buffer.from(JSON.stringify({

@@ -51,9 +51,19 @@ docker run -d -p 3000:3000 -v ./data:/app/src/data --name licencias_app licencia
 
 ## 🔑 Credenciales por Defecto
 
-| Rol | Usuario | Contraseña |
-|-----|---------|------------|
-| Admin | `admin` | `admin123` |
+| Rol | Usuario | Contraseña | Nota |
+|-----|---------|------------|------|
+| Admin | `hielo` | `admin123` | **Cambio obligatorio al primer login** |
+
+---
+
+## 🛡️ Seguridad y Tecnología
+
+### Onboarding de Seguridad (NUEVO)
+El sistema ahora incluye un flujo de **configuración obligatoria** para el administrador inicial. Al iniciar sesión por primera vez:
+1. Se debe elegir un **nombre de usuario personalizado**.
+2. Se debe configurar una **contraseña segura** validada por un medidor de fuerza en tiempo real.
+3. El acceso al panel está bloqueado hasta completar este proceso.
 
 ---
 

@@ -199,6 +199,131 @@ export default function Dashboard() {
     const Icon = (LucideIcons as any)[settings.logoType] || LucideIcons.ShieldCheck;
     return <Icon className={className} size={size} style={style} />;
   };
+
+  const SetupAccountView = ({ onComplete }: { onComplete: (user: any) => void }) => {
+    const [newName, setNewName] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [strength, setStrength] = useState(0);
+    const [loading, setLoading] = useState(false);
+
+    const calculateStrength = (pass: string) => {
+      let score = 0;
+      if (pass.length > 7) score += 1;
+      if (/[A-Z]/.test(pass)) score += 1;
+      if (/[0-9]/.test(pass)) score += 1;
+      if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+      return score;
+    };
+
+    const handlePasswordChange = (val: string) => {
+      setNewPassword(val);
+      setStrength(calculateStrength(val));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (strength < 3) {
+        triggerToast("La contraseña debe ser más fuerte", "error");
+        return;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch('/api/auth/setup-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newName, newPassword })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          triggerToast("¡Cuenta configurada con éxito!");
+          onComplete(data.user);
+        } else {
+          triggerToast(data.error || "Error al configurar cuenta", "error");
+        }
+      } catch (e) { triggerToast("Error de conexión", "error"); }
+      finally { setLoading(false); }
+    };
+
+    const strengthLabels = ["Débil", "Aceptable", "Segura", "Muy Segura"];
+    const strengthColors = ["bg-red-500", "bg-yellow-500", "bg-blue-500", "bg-emerald-500"];
+
+    return (
+      <div className="fixed inset-0 z-[200] bg-black p-4 sm:p-12 overflow-y-auto flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 via-transparent to-red-600/5 opacity-40" />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg bg-[#0c0c0c] border border-white/10 rounded-[2.5rem] p-8 sm:p-12 relative z-10 shadow-3xl"
+        >
+          <div className="flex flex-col items-center text-center mb-10">
+            <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mb-6 shadow-2xl shadow-blue-600/30">
+              <ShieldCheck className="w-10 h-10 text-white animate-pulse" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tighter uppercase mb-3 leading-none">Asegura tu Panel</h1>
+            <p className="text-white/40 text-sm font-bold uppercase tracking-widest max-w-[280px]">Configura tus credenciales reales para continuar</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase text-white/30 tracking-widest ml-1">Nuevo Usuario</label>
+              <div className="relative group">
+                <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-blue-500 transition-colors" />
+                <input 
+                  type="text" value={newName} onChange={e => setNewName(e.target.value)} required
+                  placeholder="Ej: superadmin_2026"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 outline-none focus:border-blue-500/50 transition-all font-bold placeholder:text-white/10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase text-white/30 tracking-widest ml-1">Nueva Contraseña</label>
+              <div className="relative group">
+                <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-blue-500 transition-colors" />
+                <input 
+                  type="password" value={newPassword} onChange={e => handlePasswordChange(e.target.value)} required
+                  placeholder="••••••••"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 outline-none focus:border-blue-500/50 transition-all font-bold placeholder:text-white/10"
+                />
+              </div>
+              
+              {newPassword && (
+                <div className="pt-3 space-y-2">
+                  <div className="flex gap-1 h-1.5 px-1">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className={cn(
+                        "flex-1 rounded-full transition-all duration-500",
+                        i <= strength ? strengthColors[strength - 1] : "bg-white/5"
+                      )} />
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Fuerza de seguridad</span>
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", strength < 3 ? "text-yellow-500" : "text-emerald-500")}>
+                      {strengthLabels[Math.max(0, strength - 1)]}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button 
+              disabled={loading || strength < 3 || !newName}
+              className={cn(
+                "w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-3 shadow-2xl shadow-blue-600/20 mt-4",
+                strength < 3 || !newName ? "bg-white/5 text-white/20 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-500 active:scale-95"
+              )}
+            >
+              {loading ? "Procesando..." : "Guardar y Finalizar Setup"}
+            </button>
+          </form>
+          
+          <p className="mt-8 text-center text-[9px] font-medium text-white/20 leading-relaxed max-w-[320px] mx-auto uppercase tracking-tighter">
+            * Al finalizar, se inhabilitarán las credenciales temporales por seguridad.
+          </p>
+        </motion.div>
+      </div>
+    );
+  };
   
   const createUser = async (name: string, password?: string) => {
     try {
@@ -420,6 +545,13 @@ export default function Dashboard() {
         </AnimatePresence>
       </div>
     );
+  }
+
+  if (user && user.mustChangeCredentials) {
+    return <SetupAccountView onComplete={(updatedUser) => {
+      setUser(updatedUser);
+      localStorage.setItem('session_user', JSON.stringify(updatedUser));
+    }} />;
   }
 
   const role = user.role;
