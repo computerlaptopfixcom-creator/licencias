@@ -471,6 +471,9 @@ export default function Dashboard() {
   };
 
   const reportFailed = async (licenseId: string) => {
+    if (!window.confirm("¿Seguro que esta llave no funciona? Se enviará un reporte inmediato al administrador.")) {
+      return;
+    }
     try {
       const res = await fetch('/api/licenses/report-failed', {
         method: 'POST',
