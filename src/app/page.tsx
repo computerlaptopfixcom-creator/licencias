@@ -73,7 +73,8 @@ export default function Dashboard() {
     brandName: 'Micro Licenses',
     appDescription: 'Gestiona y adquiere tus llaves de software premium',
     logoType: 'ShieldCheck',
-    primaryColor: '#3b82f6'
+    primaryColor: '#3b82f6',
+    telegramWebhookUrl: ''
   });
 
   useEffect(() => {
@@ -148,7 +149,8 @@ export default function Dashboard() {
           brandName: dataSettings.brandName || 'Micro Licenses',
           appDescription: dataSettings.appDescription || 'Gestiona y adquiere tus llaves de software premium',
           logoType: dataSettings.logoType || 'ShieldCheck',
-          primaryColor: dataSettings.primaryColor || '#3b82f6'
+          primaryColor: dataSettings.primaryColor || '#3b82f6',
+          telegramWebhookUrl: dataSettings.telegramWebhookUrl || ''
         });
       }
       
@@ -1609,7 +1611,11 @@ export default function Dashboard() {
                       <form onSubmit={(e) => {
                         e.preventDefault();
                         const target = e.target as any;
-                        saveSettings({ telegramBotToken: target.botToken.value, telegramChatId: target.chatId.value });
+                        saveSettings({ 
+                          telegramBotToken: target.botToken.value, 
+                          telegramChatId: target.chatId.value,
+                          telegramWebhookUrl: target.webhookUrl.value
+                        });
                       }} className="space-y-6">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Bot API Token</label>
@@ -1619,11 +1625,26 @@ export default function Dashboard() {
                           <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">Admin Chat ID</label>
                           <input name="chatId" type="text" defaultValue={settings.telegramChatId} placeholder="-100123456789" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
                         </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-black uppercase text-[#0088cc] tracking-widest">URL del Webhook (Opcional)</label>
+                          <input name="webhookUrl" type="text" defaultValue={settings.telegramWebhookUrl} placeholder="https://mi-dominio.com/api/telegram/webhook" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#0088cc] transition-colors font-mono text-xs" />
+                          <p className="text-[9px] text-white/30 italic">Úsalo si la detección automática de dominio falla o estás detrás de un proxy complejo.</p>
+                        </div>
                         <button type="submit" className="bg-[#0088cc] px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0077b3] transition-all shadow-lg shadow-[#0088cc]/20">Guardar API</button>
                       </form>
                       <div className="mt-6 pt-6 border-t border-white/10">
                         <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-3">Bot Interactivo</p>
                         <p className="text-xs text-white/40 mb-4">Activa el webhook para que tu bot responda a comandos como /stock, /stats y /requests directamente en Telegram.</p>
+                        
+                        {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+                          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-4 flex items-start gap-3">
+                            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-[10px] font-black uppercase text-amber-500 tracking-widest mb-1">Entorno Local Detectado</p>
+                              <p className="text-[10px] text-amber-500/70 leading-relaxed">Telegram no puede conectarse a <b>localhost</b>. Para probar el bot interactivo, debes desplegar el panel a un dominio público (HTTPS) o usar una herramienta como <b>ngrok</b> y configurar la URL arriba.</p>
+                            </div>
+                          </div>
+                        )}
                         <button
                           onClick={async () => {
                             try {

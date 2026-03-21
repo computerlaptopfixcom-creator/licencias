@@ -14,11 +14,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Bot Token no configurado' }, { status: 400 });
       }
 
-      // Derive the webhook URL from the request host
+      // Derive the webhook URL from the manual setting or the request host
       const headersList = await headers();
       const host = headersList.get('host') || '';
       const protocol = headersList.get('x-forwarded-proto') || 'https';
-      const webhookUrl = `${protocol}://${host}/api/telegram/webhook`;
+      
+      const webhookUrl = settings.telegramWebhookUrl || `${protocol}://${host}/api/telegram/webhook`;
 
       // Set the webhook
       const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/setWebhook`, {

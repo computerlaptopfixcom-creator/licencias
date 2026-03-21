@@ -46,7 +46,8 @@ export function getDb() {
       brandName: 'Micro Licenses',
       appDescription: 'Gestiona y adquiere tus llaves de software premium',
       logoType: 'ShieldCheck',
-      primaryColor: '#3b82f6'
+      primaryColor: '#3b82f6',
+      telegramWebhookUrl: ''
     };
     if (!db.catalog || db.catalog.length === 0) {
       db.catalog = DEFAULT_CATALOG;
@@ -66,7 +67,8 @@ export function getDb() {
         brandName: 'Micro Licenses',
         appDescription: 'Gestiona y adquiere tus llaves de software premium',
         logoType: 'ShieldCheck',
-        primaryColor: '#3b82f6'
+        primaryColor: '#3b82f6',
+        telegramWebhookUrl: ''
       } 
     };
   }
@@ -90,7 +92,8 @@ export function updateSettings(data: {
   brandName?: string,
   appDescription?: string,
   logoType?: string,
-  primaryColor?: string
+  primaryColor?: string,
+  telegramWebhookUrl?: string
 }) {
   const db = getDb();
   db.settings = { ...db.settings, ...data };
