@@ -75,7 +75,7 @@ export function getLicenses() {
 }
 
 export function getUsers() {
-  return getDb().users;
+  return getDb().users.map(({ password, ...safe }: any) => safe);
 }
 
 export function findUser(identifier: string) {
@@ -90,8 +90,9 @@ export function findUserSafe(identifier: string) {
   return safeUser;
 }
 
-export function addUser(name: string, email?: string, password?: string, role: 'admin' | 'user' = 'user') {
+export function addUser(name: string, email?: string, password?: string, _role?: string) {
   const db = getDb();
+  const role: 'admin' | 'user' = 'user'; // Always enforce 'user' role for security
   
   const existing = db.users.find((u: any) => (email && u.email === email) || u.name === name);
   if (existing) return null;
@@ -206,7 +207,6 @@ export function assignLicensesBatch(userId: string, product: string, count: numb
   }
 
   if (assignedCount > 0) {
-    saveDb(db);
     createNotification(db, userId, `Te han asignado ${assignedCount} licencia(s) de ${product}.`);
     saveDb(db);
     return { success: true, count: assignedCount };

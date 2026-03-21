@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { findUser, getDb, saveDb } from '@/lib/db';
+import { signToken, setAuthCookie } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
@@ -38,7 +39,13 @@ export async function POST(request: Request) {
     }
 
     const { password: _, ...safeUser } = user;
-    return NextResponse.json(safeUser);
+    
+    // Sign JWT and set httpOnly cookie
+    const token = signToken({ userId: user.id, role: user.role, name: user.name });
+    const response = NextResponse.json(safeUser);
+    setAuthCookie(response, token);
+    
+    return response;
   } catch (error) {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }

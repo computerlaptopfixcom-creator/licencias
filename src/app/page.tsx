@@ -371,9 +371,6 @@ export default function Dashboard() {
 
           <div className="text-center">
             <p className="text-sm text-white/20 italic">Acceso restringido a usuarios autorizados</p>
-            <div className="mt-4 pt-4 border-t border-white/5 flex gap-4 justify-center">
-               <button onClick={() => handleLogin('hielo', 'admin123')} className="text-[10px] text-white/10 hover:text-white/30 uppercase tracking-widest font-bold">Modo Demo: hielo</button>
-            </div>
           </div>
         </motion.div>
         
@@ -1071,7 +1068,7 @@ export default function Dashboard() {
                             </div>
                             {userLicenses === 0 && <span className="text-[9px] text-red-500 font-black uppercase mt-1 tracking-widest flex items-center gap-1"><span className="animate-pulse">●</span> Sin stock</span>}
                           </div>
-                          <span className="font-mono text-xs text-white/40 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">{userLicenses} keys</span>
+                          <span className="font-mono text-xs text-white/40 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">{userLicenses} llaves</span>
                         </div>
                         {u.role !== 'admin' && (
                           <div className="flex gap-2">
@@ -1118,7 +1115,7 @@ export default function Dashboard() {
                                 {userLicenses === 0 && <span className="text-[9px] text-red-500 font-black uppercase mt-1 tracking-widest flex items-center gap-1"><span className="animate-pulse">●</span> Reabastecimiento Necesario</span>}
                               </div>
                             </td>
-                            <td className="px-8 py-5 font-mono text-xs">{userLicenses} keys active</td>
+                            <td className="px-8 py-5 font-mono text-xs">{userLicenses} llaves activas</td>
                             <td className="px-8 py-5 text-right">
                               {u.role !== 'admin' && (
                                 <div className="flex justify-end gap-2">
@@ -1167,7 +1164,7 @@ export default function Dashboard() {
                   {Object.entries(PRODUCT_CATALOG).map(([cat, items]) => (
                     <div key={cat} className="space-y-2">
                       <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 px-1 border-b border-white/5 pb-2 mb-3">
-                        {cat} — {items.length} items
+                        {cat} — {items.length} productos
                       </div>
                       {items.map((item, idx) => {
                         const catItem = db.catalog.find((c: any) => c.name === item);
@@ -1178,7 +1175,7 @@ export default function Dashboard() {
                               <p className="font-bold text-white/90 text-sm truncate">{item}</p>
                               <div className="flex items-center gap-3 mt-1.5">
                                 <span className="font-mono text-emerald-400 font-black text-xs">${PRODUCT_PRICES[item]?.toFixed(2)}</span>
-                                <span className={cn("font-mono text-[10px] font-black px-2 py-0.5 rounded-md", availableCount > 5 ? "text-emerald-400 bg-emerald-500/10" : availableCount > 0 ? "text-yellow-400 bg-yellow-500/10" : "text-red-400 bg-red-500/10")}>{availableCount} in stock</span>
+                                <span className={cn("font-mono text-[10px] font-black px-2 py-0.5 rounded-md", availableCount > 5 ? "text-emerald-400 bg-emerald-500/10" : availableCount > 0 ? "text-yellow-400 bg-yellow-500/10" : "text-red-400 bg-red-500/10")}>{availableCount} en stock</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
@@ -1221,7 +1218,7 @@ export default function Dashboard() {
                                <div className="flex items-center gap-4">
                                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 bg-blue-500/10 px-3 py-1 rounded-lg border border-blue-500/20 shadow-lg shadow-blue-500/5">{cat}</span>
                                  <div className="h-px flex-1 bg-white/5" />
-                                 <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{items.length} items</span>
+                                 <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{items.length} productos</span>
                                </div>
                              </td>
                           </tr>
