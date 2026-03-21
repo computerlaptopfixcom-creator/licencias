@@ -78,16 +78,16 @@ export function findUserSafe(identifier: string) {
   return safeUser;
 }
 
-export function addUser(name: string, email: string, password?: string, role: 'admin' | 'user' = 'user') {
+export function addUser(name: string, email?: string, password?: string, role: 'admin' | 'user' = 'user') {
   const db = getDb();
   
-  const existing = db.users.find((u: any) => u.email === email || u.name === name);
+  const existing = db.users.find((u: any) => (email && u.email === email) || u.name === name);
   if (existing) return null;
   
   const newUser = {
     id: `u_${crypto.randomUUID().slice(0, 8)}`,
     name,
-    email,
+    email: email || '',
     password: bcrypt.hashSync(password || '123456', 10),
     role,
     createdAt: new Date().toISOString()

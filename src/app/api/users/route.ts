@@ -15,8 +15,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { name, email, password, role } = await request.json();
-    if (!name || !email) {
-      return NextResponse.json({ error: 'Campos requeridos' }, { status: 400 });
+    if (!name) {
+      return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 });
     }
     const newUser = addUser(name, email, password, role || 'user');
     if (!newUser) {

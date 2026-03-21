@@ -123,22 +123,22 @@ export default function Dashboard() {
     }
   };
 
-  const createUser = async (name: string, email: string) => {
+  const createUser = async (name: string, password?: string) => {
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email })
+        body: JSON.stringify({ name, password })
       });
       if (res.ok) {
-        triggerToast("Usuario creado correctamente");
+        triggerToast(`Usuario ${name} creado con éxito`);
         refreshData();
       } else {
-        const data = await res.json();
-        triggerToast(data.error, "error");
+        const error = await res.json();
+        triggerToast(error.error || 'Error al crear usuario', 'error');
       }
     } catch (e) {
-      triggerToast("Error al crear usuario", "error");
+      triggerToast('Error de conexión', 'error');
     }
   };
 
@@ -440,7 +440,7 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col overflow-hidden flex-1">
             <span className="text-sm font-bold truncate group-hover:text-blue-400 transition-colors uppercase">{user.name}</span>
-            <span className="text-[11px] text-white/40 truncate">{user.email}</span>
+            <span className="text-[11px] text-white/40 truncate">{user.email || user.role}</span>
           </div>
           <button onClick={() => { setUser(null); localStorage.removeItem('session_user'); setActiveTab('dashboard'); }} className="p-2 hover:bg-red-500/20 rounded-xl transition-all group/logout">
             <LogOut className="w-4 h-4 text-white/20 group-hover/logout:text-red-500" />
@@ -811,7 +811,7 @@ export default function Dashboard() {
                                     <>
                                       <td className="px-8 py-5">
                                         <div className="font-bold text-white/90 text-sm">{assignedUser ? assignedUser.name : 'Desconocido'}</div>
-                                        <div className="text-white/40 text-[10px] mt-0.5">{assignedUser?.email}</div>
+                                        {assignedUser?.email && <div className="text-white/40 text-[10px] mt-0.5">{assignedUser.email}</div>}
                                       </td>
                                       <td className="px-8 py-5 text-white/40 text-xs">
                                         {l.assignedAt ? new Date(l.assignedAt).toLocaleString() : '—'}
@@ -956,8 +956,8 @@ export default function Dashboard() {
                     </div>
                     <button onClick={() => {
                         const name = prompt("Nombre del Usuario:");
-                        const email = prompt("Email:");
-                        if (name && email) createUser(name, email);
+                        const password = prompt("Asignar Contraseña (dejar vacío para '123456'):");
+                        if (name) createUser(name, password || '123456');
                       }} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20">
                       Crear Nuevo
                     </button>
@@ -966,8 +966,7 @@ export default function Dashboard() {
                     <table className="w-full text-left">
                       <thead>
                         <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
-                          <th className="px-8 py-4">Usuario</th>
-                          <th className="px-8 py-4">Email</th>
+                          <th className="px-8 py-4">Usuario / Rol</th>
                           <th className="px-8 py-4">Stock Asignado</th>
                           <th className="px-8 py-4 text-right">Gestión</th>
                         </tr>
@@ -979,11 +978,13 @@ export default function Dashboard() {
                             <tr key={u.id} className="group hover:bg-white/[0.01]">
                               <td className="px-8 py-5">
                                 <div className="flex flex-col">
-                                  <span className="font-black text-white/90">{u.name}</span>
+                                  <div className="flex items-baseline gap-2">
+                                    <span className="font-black text-white/90">{u.name}</span>
+                                    <span className="text-[9px] text-blue-500 font-bold uppercase tracking-tighter opacity-50">{u.role}</span>
+                                  </div>
                                   {userLicenses === 0 && <span className="text-[9px] text-red-500 font-black uppercase mt-1 tracking-widest flex items-center gap-1"><span className="animate-pulse">●</span> Reabastecimiento Necesario</span>}
                                 </div>
                               </td>
-                              <td className="px-8 py-5 text-white/40">{u.email}</td>
                               <td className="px-8 py-5 font-mono text-xs">{userLicenses} keys active</td>
                               <td className="px-8 py-5 text-right">
                                 <button 
