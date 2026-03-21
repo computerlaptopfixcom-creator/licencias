@@ -1159,23 +1159,22 @@ export default function Dashboard() {
                 </div>
 
                 {/* Mobile Card View */}
-                <div className="lg:hidden space-y-3">
+                <div className="lg:hidden space-y-4">
                   {Object.entries(PRODUCT_CATALOG).map(([cat, items]) => (
-                    <div key={cat}>
-                      <div className="flex items-center gap-2 mb-2 mt-4 first:mt-0">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20">{cat}</span>
-                        <span className="text-[9px] text-white/20 font-bold">{items.length} items</span>
+                    <div key={cat} className="space-y-2">
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 px-1 border-b border-white/5 pb-2 mb-3">
+                        {cat} — {items.length} items
                       </div>
                       {items.map((item, idx) => {
                         const catItem = db.catalog.find((c: any) => c.name === item);
                         const availableCount = db.licenses.filter((l: any) => l.product === item && l.status === 'available').length;
                         return (
-                          <div key={catItem?.id || idx} className="bg-[#111] border border-white/5 rounded-2xl p-4 mb-2 flex items-center justify-between gap-3 active:bg-white/[0.03] transition-colors">
+                          <div key={catItem?.id || idx} className="bg-[#111] border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-3 active:bg-white/[0.03] transition-colors shadow-lg">
                             <div className="flex-1 min-w-0">
                               <p className="font-bold text-white/90 text-sm truncate">{item}</p>
                               <div className="flex items-center gap-3 mt-1.5">
                                 <span className="font-mono text-emerald-400 font-black text-xs">${PRODUCT_PRICES[item]?.toFixed(2)}</span>
-                                <span className={cn("font-mono text-[10px] font-black px-2 py-0.5 rounded-md", availableCount > 5 ? "text-emerald-400 bg-emerald-500/10" : availableCount > 0 ? "text-yellow-400 bg-yellow-500/10" : "text-red-400 bg-red-500/10")}>{availableCount} en stock</span>
+                                <span className={cn("font-mono text-[10px] font-black px-2 py-0.5 rounded-md", availableCount > 5 ? "text-emerald-400 bg-emerald-500/10" : availableCount > 0 ? "text-yellow-400 bg-yellow-500/10" : "text-red-400 bg-red-500/10")}>{availableCount} in stock</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
@@ -1201,56 +1200,70 @@ export default function Dashboard() {
 
                 {/* Desktop Table View */}
                 <div className="hidden lg:block bg-[#111] border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-                  <table className="w-full text-left whitespace-nowrap">
+                  <table className="w-full text-left">
                     <thead>
-                      <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/20">
-                        <th className="px-8 py-4">Categoría</th>
-                        <th className="px-8 py-4">Producto</th>
-                        <th className="px-8 py-4">Precio (USD)</th>
-                        <th className="px-8 py-4">Stock Disponible</th>
-                        <th className="px-8 py-4 text-right">Acciones</th>
+                      <tr className="text-white/40 text-[10px] font-black border-b border-white/5 uppercase tracking-widest bg-black/40 h-14">
+                        <th className="px-8 font-black">Producto</th>
+                        <th className="px-8 font-black text-center">Precio (USD)</th>
+                        <th className="px-8 font-black text-center">Stock Disponible</th>
+                        <th className="px-8 font-black text-right">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {Object.entries(PRODUCT_CATALOG).map(([cat, items]) => (
-                        items.map((item, idx) => {
-                          const catItem = db.catalog.find((c: any) => c.name === item);
-                          const availableCount = db.licenses.filter((l: any) => l.product === item && l.status === 'available').length;
-                          return (
-                            <tr key={catItem?.id || idx} className="group hover:bg-white/[0.02] transition-colors">
-                              <td className="px-8 py-4">
-                                {idx === 0 ? (
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 bg-blue-500/10 px-3 py-1 rounded-lg border border-blue-500/20">{cat}</span>
-                                ) : (
-                                  <span className="text-white/10 text-xs">↳</span>
-                                )}
-                              </td>
-                              <td className="px-8 py-4 font-bold text-white/90 text-sm">{item}</td>
-                              <td className="px-8 py-4">
-                                <span className="font-mono text-emerald-400 font-black text-sm">${PRODUCT_PRICES[item]?.toFixed(2)}</span>
-                              </td>
-                              <td className="px-8 py-4">
-                                <span className={cn("font-mono text-xs font-black px-3 py-1 rounded-lg", availableCount > 5 ? "text-emerald-400 bg-emerald-500/10" : availableCount > 0 ? "text-yellow-400 bg-yellow-500/10" : "text-red-400 bg-red-500/10")}>{availableCount}</span>
-                              </td>
-                              <td className="px-8 py-4 text-right">
-                                <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => setShowCatalogModal({show: true, mode: 'edit', item: catItem})} className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors" title="Editar">
-                                    <Pencil className="w-3.5 h-3.5 text-blue-400" />
-                                  </button>
-                                  <button onClick={async () => {
-                                    if (confirm(`¿Eliminar "${item}" del catálogo?`)) {
-                                      await fetch('/api/catalog', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: catItem?.id }) });
-                                      triggerToast('Producto eliminado del catálogo');
-                                      refreshData();
-                                    }
-                                  }} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors" title="Eliminar">
-                                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })
+                        <React.Fragment key={cat}>
+                          <tr className="bg-white/[0.02]">
+                             <td colSpan={4} className="px-8 py-3.5 border-b border-white/5">
+                               <div className="flex items-center gap-4">
+                                 <span className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-400 bg-blue-500/10 px-3 py-1 rounded-lg border border-blue-500/20 shadow-lg shadow-blue-500/5">{cat}</span>
+                                 <div className="h-px flex-1 bg-white/5" />
+                                 <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest">{items.length} items</span>
+                               </div>
+                             </td>
+                          </tr>
+                          {items.map((item, idx) => {
+                            const catItem = db.catalog.find((c: any) => c.name === item);
+                            const availableCount = db.licenses.filter((l: any) => l.product === item && l.status === 'available').length;
+                            return (
+                              <tr key={catItem?.id || idx} className="group hover:bg-white/[0.01] transition-colors h-16">
+                                <td className="px-8">
+                                  <div className="flex flex-col">
+                                    <span className="font-bold text-white/90 text-[14px]">{item}</span>
+                                  </div>
+                                </td>
+                                <td className="px-8 text-center">
+                                  <span className="font-mono text-emerald-400 font-black text-sm">${PRODUCT_PRICES[item]?.toFixed(2)}</span>
+                                </td>
+                                <td className="px-8 text-center">
+                                  <span className={cn("inline-flex font-mono text-xs font-black px-4 py-1.5 rounded-xl border", 
+                                    availableCount > 5 ? "text-emerald-400 bg-emerald-500/5 border-emerald-500/10" : 
+                                    availableCount > 0 ? "text-yellow-400 bg-yellow-500/5 border-yellow-500/10" : 
+                                    "text-red-400 bg-red-500/5 border-red-500/10"
+                                  )}>
+                                    {availableCount}
+                                  </span>
+                                </td>
+                                <td className="px-8 text-right">
+                                  <div className="flex items-center gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all transform translate-x-1 group-hover:translate-x-0">
+                                    <button onClick={() => setShowCatalogModal({show: true, mode: 'edit', item: catItem})} className="p-2.5 bg-white/5 hover:bg-blue-500/20 rounded-xl transition-colors border border-white/5" title="Editar">
+                                      <Pencil className="w-4 h-4 text-blue-400" />
+                                    </button>
+                                    <button onClick={async () => {
+                                      if (confirm(`¿Eliminar "${item}" del catálogo?`)) {
+                                        await fetch('/api/catalog', { method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: catItem?.id }) });
+                                        triggerToast('Producto eliminado del catálogo');
+                                        refreshData();
+                                      }
+                                    }} className="p-2.5 bg-white/5 hover:bg-red-500/20 rounded-xl transition-colors border border-white/5" title="Eliminar">
+                                      <Trash2 className="w-4 h-4 text-red-400" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        }
+                        </React.Fragment>
                       ))}
                     </tbody>
                   </table>
