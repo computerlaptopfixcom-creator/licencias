@@ -19,7 +19,8 @@ import {
   Tag,
   Pencil,
   Trash2,
-  DollarSign
+  DollarSign,
+  Menu
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showCatalogModal, setShowCatalogModal] = useState<{show: boolean, mode: 'create'|'edit', item?: any}>({show: false, mode: 'create'});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Derive PRODUCT_CATALOG and PRODUCT_PRICES from db.catalog
   const PRODUCT_CATALOG: Record<string, string[]> = {};
@@ -351,7 +353,7 @@ export default function Dashboard() {
   const assignedLicenses = db.licenses.filter(l => l.status === 'assigned').length;
 
   return (
-    <div className="h-screen overflow-hidden bg-[#050505] text-white flex font-sans">
+    <div className="h-screen overflow-hidden bg-[#050505] text-white flex font-sans relative">
       <AnimatePresence>
         {showToast.show && (
           <motion.div 
@@ -367,32 +369,46 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <aside className="w-72 border-r border-white/5 bg-[#080808] p-8 flex flex-col gap-10">
-        <div className="flex items-center gap-3 px-2">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <ShieldCheck className="w-7 h-7 text-white" />
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <aside className={cn(
+        "w-72 border-r border-white/5 bg-[#080808] p-8 flex flex-col gap-10 z-50",
+        "fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <ShieldCheck className="w-7 h-7 text-white" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-xl leading-tight">MicroSec</span>
+              <span className="text-[10px] text-blue-500 uppercase tracking-widest font-black">Licensing</span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-xl leading-tight">MicroSec</span>
-            <span className="text-[10px] text-blue-500 uppercase tracking-widest font-black">Licensing</span>
-          </div>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 hover:bg-white/10 rounded-xl">
+            <X className="w-5 h-5 text-white/40" />
+          </button>
         </div>
 
         <nav className="flex-1 space-y-3">
-          <NavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => setActiveTab('dashboard')} />
+          <NavItem active={activeTab === 'dashboard'} icon={LayoutDashboard} label="Resumen" onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} />
           {role === 'admin' ? (
             <>
-              <NavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} />
-              <NavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} />
-              <NavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} />
+              <NavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => { setActiveTab('inventory'); setSidebarOpen(false); }} />
+              <NavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => { setActiveTab('users'); setSidebarOpen(false); }} />
+              <NavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => { setActiveTab('catalog'); setSidebarOpen(false); }} />
             </>
           ) : (
             <>
-              <NavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} />
+              <NavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => { setActiveTab('my-keys'); setSidebarOpen(false); }} />
             </>
           )}
           <div className="py-4"><div className="h-px bg-white/5 mx-2" /></div>
-          <NavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} />
+          <NavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => { setActiveTab('settings'); setSidebarOpen(false); }} />
         </nav>
 
         {/* Notifications Trigger */}
@@ -437,7 +453,7 @@ export default function Dashboard() {
         {showNotifications && (
           <motion.div 
             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-            className="fixed top-0 bottom-0 left-72 w-[22rem] bg-[#0a0a0a] border-r border-white/10 shadow-3xl z-40 flex flex-col"
+            className="fixed top-0 bottom-0 left-0 lg:left-72 w-full sm:w-[22rem] bg-[#0a0a0a] border-r border-white/10 shadow-3xl z-[60] flex flex-col"
           >
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -481,20 +497,25 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <main className="flex-1 p-12 overflow-auto relative z-10 bg-black/40">
-        <header className="flex justify-between items-end mb-12">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={cn(
-                "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border",
-                role === 'admin' ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-              )}>
-                {role === 'admin' ? 'Administrative Access' : 'Verified User'}
-              </span>
+      <main className="flex-1 p-4 sm:p-6 lg:p-12 overflow-auto relative z-10 bg-black/40 pb-24 lg:pb-12">
+        <header className="flex justify-between items-start sm:items-end mb-6 lg:mb-12 gap-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 hover:bg-white/10 rounded-xl transition-all">
+              <Menu className="w-6 h-6" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={cn(
+                  "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border",
+                  role === 'admin' ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                )}>
+                  {role === 'admin' ? 'Administrative Access' : 'Verified User'}
+                </span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight capitalize leading-none">
+                {activeTab === 'dashboard' ? 'Centro de Operaciones' : activeTab === 'inventory' ? 'Inventario Global' : activeTab === 'users' ? 'Gestión de Usuarios' : activeTab === 'settings' ? 'Seguridad y Perfil' : activeTab === 'catalog' ? 'Catálogo de Productos' : activeTab}
+              </h2>
             </div>
-            <h2 className="text-4xl font-extrabold tracking-tight capitalize leading-none">
-              {activeTab === 'dashboard' ? 'Centro de Operaciones' : activeTab === 'inventory' ? 'Inventario Global' : activeTab === 'users' ? 'Gestión de Usuarios' : activeTab === 'settings' ? 'Seguridad y Perfil' : activeTab}
-            </h2>
           </div>
           
           <div className="bg-[#111] border border-white/10 rounded-2xl p-2 flex gap-2">
@@ -1297,9 +1318,9 @@ function StatCard({ title, value, color, subtitle }: { title: string, value: num
     purple: "border-purple-500/10 text-purple-500"
   };
   return (
-    <div className={cn("bg-[#111] border rounded-[2rem] p-8", themes[color])}>
+    <div className={cn("bg-[#111] border rounded-[2rem] p-5 sm:p-8", themes[color])}>
       <span className="text-[10px] font-black uppercase tracking-widest opacity-50">{title}</span>
-      <div className="text-6xl font-black text-white mt-2 mb-2">{value}</div>
+      <div className="text-4xl sm:text-6xl font-black text-white mt-2 mb-2">{value}</div>
       <span className="text-xs font-bold opacity-30">{subtitle}</span>
     </div>
   );

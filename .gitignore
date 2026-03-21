@@ -42,3 +42,7 @@ next-env.d.ts
 
 # === PRODUCTION DATA — NEVER COMMIT ===
 src/data/database.json
+
+# === AI CONFIG FILES ===
+AGENTS.md
+CLAUDE.md
