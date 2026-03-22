@@ -32,3 +32,23 @@ export async function POST(request: Request) {
     }
   }, request);
 }
+
+export async function DELETE(request: Request) {
+  return withAdmin(async () => {
+    try {
+      const { searchParams } = new URL(request.url);
+      const userId = searchParams.get('id');
+      if (!userId) {
+        return NextResponse.json({ error: 'ID de usuario requerido' }, { status: 400 });
+      }
+      const { deleteUser } = await import('@/lib/db');
+      const result = deleteUser(userId);
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    }
+  }, request);
+}

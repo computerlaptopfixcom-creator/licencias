@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 const DB_PATH = path.join(process.cwd(), 'src/data/database.json');
 
 const DEFAULT_CATALOG = [
-  { id: 'cat_1', category: 'Windows Keys', name: 'Windows Pro 10/11 Phone', price: 2.50 },
+  { id: 'cat_1', category: 'Windows Keys', name: 'Windows Pro 10/11 Phone', price: 3.00 },
   { id: 'cat_2', category: 'Windows Keys', name: 'Windows Home 10/11 Phone', price: 2.50 },
   { id: 'cat_3', category: 'Windows Keys', name: 'Win Cloud Retail Phone', price: 2.50 },
   { id: 'cat_4', category: 'Windows Keys', name: 'Win Enterprise MAK Phone', price: 5.00 },
@@ -150,6 +150,32 @@ export function addUser(name: string, email?: string, password?: string, _role?:
   return newUser;
 }
 
+export function deleteUser(userId: string) {
+  const db = getDb();
+  const userIdx = db.users.findIndex((u: any) => u.id === userId);
+  if (userIdx === -1) return { success: false, error: 'Usuario no encontrado' };
+  
+  // Protect admin from self-deletion or deleting other admins for safety
+  if (db.users[userIdx].role === 'admin') {
+     return { success: false, error: 'No se pueden eliminar cuentas de administrador' };
+  }
+
+  // Unassign licenses to recover stock
+  db.licenses.forEach((l: any) => {
+    if (l.assignedTo === userId) {
+      l.status = 'available';
+      l.assignedTo = null;
+      delete l.assignedAt;
+      delete l.claimed;
+      delete l.claimedAt;
+    }
+  });
+
+  db.users.splice(userIdx, 1);
+  saveDb(db);
+  return { success: true };
+}
+
 export function addLicense(product: string, key: string) {
   const db = getDb();
   const newLicense = {
@@ -272,7 +298,7 @@ export function claimOneLicense(userId: string, product: string) {
     saveDb(db);
     return { success: true, license };
   }
-  return { success: false, error: 'No tienes créditos/licencias sin reclamar de este producto' };
+  return { success: false, error: 'No tienes unidades/licencias sin reclamar de este producto' };
 }
 
 export function revealLicense(userId: string, licenseId: string) {
