@@ -23,6 +23,7 @@ import { RequestsView } from '@/components/RequestsView';
 import { DownloadsView } from '@/components/DownloadsView';
 import { LoginForm } from '@/components/LoginForm';
 import { SetupAccountView } from '@/components/SetupAccountView';
+import { FirstRunSetup } from '@/components/FirstRunSetup';
 import { ProductCard } from '@/components/ui/ProductCard';
 
 export default function Dashboard() {
@@ -43,6 +44,7 @@ export default function Dashboard() {
   const [userInventoryFilter, setUserInventoryFilter] = useState<'all' | string>('all');
   const [userSubFilter, setUserSubFilter] = useState<string | null>(null);
   const [stats, setStats] = useState<any>(null);
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
 
   const [settings, setSettings] = useState({ 
     telegramBotToken: '', 
@@ -73,6 +75,12 @@ export default function Dashboard() {
         setUser(currentUser);
       } catch(e) { localStorage.removeItem('session_user'); }
     }
+
+    // Check if system needs first-run setup
+    fetch('/api/auth/init').then(r => r.json()).then(d => {
+      setNeedsSetup(d.needsSetup);
+    }).catch(() => setNeedsSetup(false));
+
     refreshData(currentUser);
     refreshStats();
 
@@ -426,6 +434,14 @@ export default function Dashboard() {
       }
     } catch (e) {}
   };
+
+  if (needsSetup === null) {
+    return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/20 border-t-blue-500 rounded-full animate-spin" /></div>;
+  }
+
+  if (needsSetup) {
+    return <FirstRunSetup onComplete={(u) => { setUser(u); setNeedsSetup(false); refreshData(u); refreshStats(); }} />;
+  }
 
   if (!user) {
     return <LoginForm settings={settings} handleLogin={handleLogin} showToast={showToast} />;
