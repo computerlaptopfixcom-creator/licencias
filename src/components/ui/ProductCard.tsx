@@ -4,12 +4,12 @@ import { Package } from 'lucide-react';
 
 interface ProductCardProps {
   product: string;
-  credits: number;
+  stock: number;
   price?: number;
   onClick: () => void;
 }
 
-export function ProductCard({ product, credits, price, onClick }: ProductCardProps) {
+export function ProductCard({ product, stock, price, onClick }: ProductCardProps) {
   return (
     <motion.div whileHover={{ y: -5 }} className="bg-[#111] border border-white/10 rounded-[2rem] p-8 flex flex-col gap-6 group shadow-2xl">
       <div className="flex justify-between items-start">
@@ -19,7 +19,7 @@ export function ProductCard({ product, credits, price, onClick }: ProductCardPro
       <div className="flex items-end justify-between mt-auto">
         <div className="flex flex-col">
           <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Disponibilidad</span>
-          <span className="text-4xl font-black text-blue-500">{credits} <span className="text-xs opacity-40">Uds</span></span>
+          <span className="text-4xl font-black text-blue-500">{stock} <span className="text-xs opacity-40">Uds</span></span>
         </div>
         <div className="flex flex-col items-end gap-3">
           {price && (

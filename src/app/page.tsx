@@ -521,7 +521,7 @@ export default function Dashboard() {
                         <ProductCard 
                           key={item.id} 
                           product={item.name} 
-                          credits={db.licenses.filter(l => l.product === item.name && l.status === 'available').length} 
+                          stock={db.licenses.filter(l => l.product === item.name && l.status === 'available').length} 
                           price={item.price}
                           onClick={() => requestLicense(item.name, 1)} 
                         />
