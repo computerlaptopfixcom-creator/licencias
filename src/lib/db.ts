@@ -202,6 +202,14 @@ export function getInventoryStats() {
     total: db.licenses.length,
     available: db.licenses.filter((l: any) => l.status === 'available').length,
     assigned: db.licenses.filter((l: any) => l.status === 'assigned').length,
+    failed: db.licenses.filter((l: any) => l.reportedFailed).length,
+    users: db.users.length,
+    requests: {
+      total: db.requests.length,
+      pending: db.requests.filter((r: any) => r.status === 'pending').length,
+      resolved: db.requests.filter((r: any) => r.status === 'resolved').length,
+      rejected: db.requests.filter((r: any) => r.status === 'rejected').length
+    },
     lowStock: []
   };
 
@@ -332,6 +340,24 @@ export function resolveRequest(reqId: string) {
   if (req) {
     req.status = 'resolved';
     req.resolvedAt = new Date().toISOString();
+    saveDb(db);
+    return { success: true };
+  }
+  return { success: false, error: 'Solicitud no encontrada' };
+}
+
+export function rejectRequest(reqId: string) {
+  const db = getDb();
+  const req = db.requests.find((r: any) => r.id === reqId);
+  if (req) {
+    req.status = 'rejected';
+    req.rejectedAt = new Date().toISOString();
+    
+    const user = db.users.find((u: any) => u.id === req.userId);
+    if (user) {
+      createNotification(db, user.id, `❌ <b>SOLICITUD RECHAZADA</b>: Tu pedido de <b>${req.count}x ${req.product}</b> no ha podido ser procesado. Contacta a soporte para más detalles. 🛠️`);
+    }
+    
     saveDb(db);
     return { success: true };
   }

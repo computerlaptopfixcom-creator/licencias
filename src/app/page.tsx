@@ -15,6 +15,7 @@ import {
   X,
   Bell,
   AlertTriangle,
+  ShieldAlert,
   LayoutDashboard,
   Tag,
   Pencil,
@@ -467,6 +468,27 @@ export default function Dashboard() {
     }
   };
 
+  const rejectRequest = async (reqId: string) => {
+    if (!window.confirm("¿Seguro que deseas RECHAZAR esta solicitud?")) return;
+    try {
+      const res = await fetch('/api/requests/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reqId })
+      });
+      if (res.ok) {
+        triggerToast("Solicitud rechazada", "error");
+        refreshData();
+        refreshStats();
+      } else {
+        const data = await res.json();
+        triggerToast(data.error, "error");
+      }
+    } catch (e) {
+      triggerToast("Error al rechazar solicitud", "error");
+    }
+  };
+
   const [bulkOpen, setBulkOpen] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState<{show: boolean, userId: string, userName: string}>({show: false, userId: '', userName: ''});
 
@@ -802,27 +824,53 @@ export default function Dashboard() {
             {activeTab === 'dashboard' && (
               <div className="space-y-10">
                 {role === 'admin' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-emerald-500 shadow-xl">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500"><Package className="w-6 h-6" /></div>
-                        <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Stock Disponible</span>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-emerald-500 shadow-xl">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500"><Package className="w-6 h-6" /></div>
+                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Stock Disponible</span>
+                        </div>
+                        <div className="text-5xl font-black tabular-nums">{stats?.available || 0}</div>
                       </div>
-                      <div className="text-5xl font-black tabular-nums">{stats?.available || 0}</div>
+                      <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-blue-500 shadow-xl">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500"><Key className="w-6 h-6" /></div>
+                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Keys Asignadas</span>
+                        </div>
+                        <div className="text-5xl font-black tabular-nums">{stats?.assigned || 0}</div>
+                      </div>
+                      <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-amber-500 shadow-xl">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500"><ShieldCheck className="w-6 h-6" /></div>
+                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Total en Base</span>
+                        </div>
+                        <div className="text-5xl font-black tabular-nums">{stats?.total || 0}</div>
+                      </div>
                     </div>
-                    <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-blue-500 shadow-xl">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500"><Users className="w-6 h-6" /></div>
-                        <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Keys Entregadas</span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-purple-500 shadow-xl">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500"><Users className="w-6 h-6" /></div>
+                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Usuarios Activos</span>
+                        </div>
+                        <div className="text-5xl font-black tabular-nums">{stats?.users || 0}</div>
                       </div>
-                      <div className="text-5xl font-black tabular-nums">{stats?.assigned || 0}</div>
-                    </div>
-                    <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-amber-500 shadow-xl">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500"><ShieldCheck className="w-6 h-6" /></div>
-                        <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Total en Base</span>
+                      <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-red-500 shadow-xl">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="p-3 bg-red-500/10 rounded-2xl text-red-500"><AlertTriangle className="w-6 h-6" /></div>
+                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Solicitudes Rechazadas</span>
+                        </div>
+                        <div className="text-5xl font-black tabular-nums">{stats?.requests?.rejected || 0}</div>
                       </div>
-                      <div className="text-5xl font-black tabular-nums">{stats?.total || 0}</div>
+                      <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-orange-500 shadow-xl">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500"><ShieldAlert className="w-6 h-6" /></div>
+                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Llaves Fallidas</span>
+                        </div>
+                        <div className="text-5xl font-black tabular-nums">{stats?.failed || 0}</div>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -905,13 +953,19 @@ export default function Dashboard() {
                                </span>
                                <span className="text-[10px] text-white/40">{rUser?.name} ({rUser?.email})</span>
                             </div>
-                            <button onClick={async () => {
-                               await fetch('/api/requests/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reqId: r.id }) });
-                               triggerToast("Solicitud Resuelta");
-                               refreshData();
-                            }} className="text-[10px] bg-white/10 hover:bg-emerald-500/20 hover:text-emerald-500 text-white font-bold py-2 rounded-lg transition-colors uppercase tracking-widest text-center mt-auto">
-                               Marcar como Resuelta
-                            </button>
+                             <div className="flex gap-2 mt-auto">
+                               <button onClick={async () => {
+                                  await fetch('/api/requests/resolve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reqId: r.id }) });
+                                  triggerToast("Solicitud Resuelta");
+                                  refreshData();
+                                  refreshStats();
+                               }} className="flex-1 text-[10px] bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold py-2.5 rounded-xl transition-colors uppercase tracking-widest text-center border border-emerald-500/20">
+                                 Aprobar
+                               </button>
+                               <button onClick={() => rejectRequest(r.id)} className="flex-1 text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold py-2.5 rounded-xl transition-colors uppercase tracking-widest text-center border border-red-500/20">
+                                 Rechazar
+                               </button>
+                             </div>
                           </div>
                         );
                       })}
