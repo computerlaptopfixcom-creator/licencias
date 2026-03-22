@@ -4,6 +4,21 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
 const DB_PATH = path.join(process.cwd(), 'src/data/database.json');
+const TEMPLATE_PATH = path.join(process.cwd(), 'src/data/database.template.json');
+
+// Auto-initialize from template if database.json doesn't exist
+function ensureDb() {
+  if (!fs.existsSync(DB_PATH)) {
+    try {
+      if (fs.existsSync(TEMPLATE_PATH)) {
+        fs.copyFileSync(TEMPLATE_PATH, DB_PATH);
+        console.log('✅ Database auto-initialized from template. Login: admin / admin123');
+      }
+    } catch (e) {
+      console.error('Error auto-initializing database:', e);
+    }
+  }
+}
 
 const DEFAULT_CATALOG = [
   { id: 'cat_1', category: 'Windows Keys', name: 'Windows Pro 10/11 Phone', price: 3.00 },
@@ -35,6 +50,7 @@ const DEFAULT_CATALOG = [
 ];
 
 export function getDb() {
+  ensureDb();
   try {
     const data = fs.readFileSync(DB_PATH, 'utf8');
     const db = JSON.parse(data);
