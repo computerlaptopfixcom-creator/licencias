@@ -4,9 +4,9 @@
       "id": "u_admin01",
       "email": "admin@keys.com",
       "name": "admin",
-      "password": "$2b$10$2g7Bf5csv2F9YQlsNq6oru2sJOsLugBluh8nEtDTPaDwHFJmpIJJq",
+      "password": "$2b$10$uq5wt3TahVRc7HHkQe1oCux6tLjeDzIcz9JLhnKBit9lsulAoORBm",
       "role": "admin",
-      "mustChangeCredentials": true,
+      "mustChangeCredentials": false,
       "createdAt": "2026-01-01T00:00:00.000Z"
     }
   ],
@@ -14,9 +14,11 @@
   "requests": [],
   "notifications": [],
   "catalog": [],
+  "downloads": [],
   "settings": {
     "telegramBotToken": "",
     "telegramChatId": "",
+    "telegramWebhookUrl": "",
     "brandName": "Micro Licenses",
     "appDescription": "Gestiona y adquiere tus llaves de software premium",
     "logoType": "ShieldCheck",
