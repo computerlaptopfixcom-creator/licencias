@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSettings } from '@/lib/db';
 import { withAdmin } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { WEBHOOK_SECRET } from '../webhook/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,13 +22,14 @@ export async function POST(request: Request) {
       
       const webhookUrl = settings.telegramWebhookUrl || `${protocol}://${host}/api/telegram/webhook`;
 
-      // Set the webhook
+      // Set the webhook WITH secret_token for authentication
       const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/setWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           url: webhookUrl,
           allowed_updates: ['message'],
+          secret_token: WEBHOOK_SECRET,
         }),
       });
 

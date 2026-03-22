@@ -1,11 +1,28 @@
 import { NextResponse } from 'next/server';
 import { getDb, getSettings, getLicenses, getUsers } from '@/lib/db';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
+
+// Stable webhook secret derived from JWT_SECRET or a fallback
+const WEBHOOK_SECRET = crypto
+  .createHash('sha256')
+  .update(process.env.JWT_SECRET || 'micro-license-system-secret-key-2026')
+  .digest('hex')
+  .slice(0, 32); // Telegram allows 1-256 chars
+
+// Export the secret so the setup endpoint can use it
+export { WEBHOOK_SECRET };
 
 // Telegram Bot Webhook — handles incoming messages and commands
 export async function POST(request: Request) {
   try {
+    // ── Authenticate: verify the secret token header ──
+    const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
+    if (secretHeader !== WEBHOOK_SECRET) {
+      return NextResponse.json({ ok: false }, { status: 403 });
+    }
+
     const update = await request.json();
     const message = update?.message;
 
