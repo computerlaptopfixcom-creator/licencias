@@ -24,8 +24,8 @@ Panel de administración profesional diseñado para la gestión integral de inve
 
 ### 🔔 Notificaciones y UX
 - **Alertas en Tiempo Real**: Sistema de "campanita" para avisar sobre nuevas asignaciones y reportes.
-- **Diseño Glassmorphism**: Interfaz premium con desenfoques, gradientes y animaciones fluidas (Framer Motion).
-- **Responsive 100%**: UI optimizada para celulares y tablets con menús colapsables y tablas con scroll lateral.
+- **Diseño Ultra-Moderno**: Interfaz premium con glassmorphism, animaciones fluidas (Framer Motion) y una limpieza visual excepcional (sin banners innecesarios).
+- **Responsive & Pro**: UI optimizada para celulares y escritorio con paddings inteligentes que maximizan el área de trabajo.
 
 ---
 

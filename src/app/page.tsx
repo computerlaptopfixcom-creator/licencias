@@ -21,7 +21,8 @@ import {
   Pencil,
   Trash2,
   DollarSign,
-  Menu
+  Menu,
+  Download
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import * as LucideIcons from 'lucide-react';
@@ -43,7 +44,7 @@ function sanitizeHtml(html: string): string {
 // Catalog is now dynamic — loaded from database via /api/catalog
 
 export default function Dashboard() {
-  const [db, setDb] = useState<{ users: any[], licenses: any[], requests: any[], catalog: any[] }>({ users: [], licenses: [], requests: [], catalog: [] });
+  const [db, setDb] = useState<{ users: any[], licenses: any[], requests: any[], catalog: any[], downloads: any[] }>({ users: [], licenses: [], requests: [], catalog: [], downloads: [] });
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
@@ -111,23 +112,20 @@ export default function Dashboard() {
 
   const refreshData = async (currentUser: any = user) => {
     try {
-      const promises: any[] = [
+      const endpoints = [
         fetch('/api/users'),
         fetch('/api/licenses'),
         fetch('/api/requests'),
         fetch('/api/catalog'),
-        currentUser ? fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.role === 'admin' ? 'admin' : currentUser.id })}) : Promise.resolve(null)
+        fetch('/api/downloads'),
+        currentUser ? fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.role === 'admin' ? 'admin' : currentUser.id })}) : Promise.resolve(null),
+        currentUser?.role === 'admin' ? fetch('/api/settings') : Promise.resolve(null)
       ];
-      if (currentUser?.role === 'admin') {
-        promises.push(fetch('/api/settings'));
-      }
       
-      const results = await Promise.all(promises);
-      const [resUsers, resLicenses, resRequests, resCatalog, resNotifs] = results;
-      const resSettings = currentUser?.role === 'admin' ? results[5] : null;
-
+      const [resUsers, resLicenses, resRequests, resCatalog, resDownloads, resNotifs, resSettings] = await Promise.all(endpoints);
+      
       // If any core endpoint returns 401, session is invalid — auto logout
-      if (resUsers.status === 401 || resLicenses.status === 401) {
+      if (resUsers?.status === 401 || resLicenses?.status === 401) {
         if (currentUser) {
           setUser(null);
           localStorage.removeItem('session_user');
@@ -136,12 +134,20 @@ export default function Dashboard() {
       }
 
       // Only parse if responses are OK
-      const users = resUsers.ok ? await resUsers.json() : [];
-      const licenses = resLicenses.ok ? await resLicenses.json() : [];
-      const requests = resRequests.ok ? await resRequests.json() : [];
-      const catalog = resCatalog.ok ? await resCatalog.json() : [];
-      const notifs = resNotifs && resNotifs.ok ? await resNotifs.json() : [];
-      setDb({ users: Array.isArray(users) ? users : [], licenses: Array.isArray(licenses) ? licenses : [], requests: Array.isArray(requests) ? requests : [], catalog: Array.isArray(catalog) ? catalog : [] });
+      const users = resUsers && resUsers.ok ? await resUsers.clone().json().catch(() => []) : [];
+      const licenses = resLicenses && resLicenses.ok ? await resLicenses.clone().json().catch(() => []) : [];
+      const requests = resRequests && resRequests.ok ? await resRequests.clone().json().catch(() => []) : [];
+      const catalog = resCatalog && resCatalog.ok ? await resCatalog.clone().json().catch(() => []) : [];
+      const notifs = resNotifs && resNotifs.ok ? await resNotifs.clone().json().catch(() => []) : [];
+      const downloads = resDownloads && resDownloads.ok ? await resDownloads.clone().json().catch(() => []) : [];
+      setNotifications(Array.isArray(notifs) ? notifs : []);
+      setDb({ 
+        users: Array.isArray(users) ? users : [], 
+        licenses: Array.isArray(licenses) ? licenses : [], 
+        requests: Array.isArray(requests) ? requests : [], 
+        catalog: Array.isArray(catalog) ? catalog : [],
+        downloads: Array.isArray(downloads) ? downloads : []
+      });
       if (resSettings && resSettings.ok) {
         const dataSettings = await resSettings.json();
         setSettings({ 
@@ -645,7 +651,8 @@ export default function Dashboard() {
               <NavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} color={settings.primaryColor} />
             </>
           )}
-          <div className="py-4"><div className="h-px bg-white/5 mx-2" /></div>
+          <NavItem active={activeTab === 'downloads'} icon={Download} label="Descargas" onClick={() => setActiveTab('downloads')} color={settings.primaryColor} />
+          <div className="py-2"><div className="h-px bg-white/5 mx-2" /></div>
           <NavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} color={settings.primaryColor} />
         </nav>
 
@@ -779,7 +786,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <main className="flex-1 p-4 pt-20 sm:p-6 sm:pt-6 lg:p-12 overflow-auto relative z-10 bg-black/40 pb-40 lg:pb-12">
+      <main className="flex-1 p-6 pt-24 sm:p-8 sm:pt-8 lg:p-10 overflow-auto relative z-10 bg-black/40 pb-40 lg:pb-12">
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 lg:mb-12 gap-4">
           <div className="flex items-center gap-3">
             <div>
@@ -792,12 +799,13 @@ export default function Dashboard() {
                 </span>
               </div>
               <h2 className="text-[1.35rem] sm:text-3xl lg:text-4xl font-extrabold tracking-tight capitalize leading-none mt-1">
-                {activeTab === 'dashboard' ? 'Centro de Operaciones' : activeTab === 'inventory' ? 'Inventario Global' : activeTab === 'users' ? 'Gestión de Usuarios' : activeTab === 'settings' ? 'Seguridad y Perfil' : activeTab === 'catalog' ? 'Catálogo de Productos' : activeTab}
+                {activeTab === 'dashboard' ? 'Centro de Operaciones' : activeTab === 'inventory' ? 'Inventario Global' : activeTab === 'users' ? 'Gestión de Usuarios' : activeTab === 'settings' ? 'Seguridad y Perfil' : activeTab === 'catalog' ? 'Catálogo de Productos' : activeTab === 'downloads' ? 'Centro de Descargas' : activeTab}
               </h2>
             </div>
           </div>
           
-          <div className="bg-[#111] border border-white/10 rounded-2xl p-2 flex gap-2 w-full sm:w-auto overflow-x-auto whitespace-nowrap scrollbar-hide">
+          {(role !== 'admin' || activeTab === 'inventory') && (
+           <div className="bg-[#111] border border-white/10 rounded-2xl p-2 flex gap-2 w-full sm:w-auto overflow-x-auto whitespace-nowrap scrollbar-hide">
              {role !== 'admin' && (
                <button className="px-4 py-2 text-sm font-bold text-white/60 hover:text-white transition-colors">Soporte</button>
              )}
@@ -809,7 +817,8 @@ export default function Dashboard() {
                  <PlusCircle className="w-4 h-4" /> {bulkOpen ? 'Cerrar Cargador' : 'Cargar Inventario'}
                </button>
              )}
-          </div>
+           </div>
+          )}
         </header>
 
         <AnimatePresence mode="wait">
@@ -972,15 +981,11 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
-                
-                <div className="bg-[#111] border border-white/10 rounded-[3rem] p-12 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-transparent opacity-50 transition-opacity group-hover:opacity-80" />
-                  <div className="relative z-10">
-                    <h3 className="text-5xl font-black mb-6 tracking-tighter uppercase">SISTEMA CONTROL<br /><span className="text-blue-500">GESTOR DE LLAVES</span></h3>
-                    <p className="text-white/40 text-lg max-w-xl mb-10 leading-relaxed font-medium">Administra licencias, gestiona usuarios y monitorea el inventario en tiempo real con seguridad total.</p>
-                  </div>
-                </div>
               </div>
+            )}
+
+            {activeTab === 'downloads' && (
+              <DownloadsView downloads={db.downloads} role={user.role} onRefresh={() => refreshData()} />
             )}
 
             {activeTab === 'inventory' && role === 'admin' && (
@@ -1784,12 +1789,13 @@ export default function Dashboard() {
           <>
             <MobileNavItem active={activeTab === 'inventory'} icon={Package} label="Inventario" onClick={() => setActiveTab('inventory')} color={settings.primaryColor} />
             <MobileNavItem active={activeTab === 'users'} icon={Users} label="Usuarios" onClick={() => setActiveTab('users')} color={settings.primaryColor} />
-            <MobileNavItem active={activeTab === 'catalog'} icon={Tag} label="Catálogo" onClick={() => setActiveTab('catalog')} color={settings.primaryColor} />
+            <MobileNavItem active={activeTab === 'downloads'} icon={Download} label="ISO" onClick={() => setActiveTab('downloads')} color={settings.primaryColor} />
             <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} color={settings.primaryColor} />
           </>
         ) : (
           <>
             <MobileNavItem active={activeTab === 'my-keys'} icon={Key} label="Mis Llaves" onClick={() => setActiveTab('my-keys')} color={settings.primaryColor} />
+            <MobileNavItem active={activeTab === 'downloads'} icon={Download} label="ISO" onClick={() => setActiveTab('downloads')} color={settings.primaryColor} />
             <MobileNavItem active={activeTab === 'settings'} icon={Settings} label="Ajustes" onClick={() => setActiveTab('settings')} color={settings.primaryColor} />
           </>
         )}
@@ -1908,6 +1914,149 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
+    </div>
+  );
+}
+
+function DownloadsView({ downloads, role, onRefresh }: { downloads: any[], role: string, onRefresh: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [editingDownload, setEditingDownload] = useState<any>(null);
+
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/downloads?id=${id}`, { method: 'DELETE' });
+      if (res.ok) onRefresh();
+    } catch (e) {}
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const target = e.target as any;
+    const body = {
+      title: target.title.value,
+      link: target.link.value,
+      category: target.category.value,
+      ...(editingDownload && { id: editingDownload.id })
+    };
+
+    try {
+      const res = await fetch('/api/downloads', {
+        method: editingDownload ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        target.reset();
+        setEditingDownload(null);
+        onRefresh();
+      }
+    } catch (e) {}
+    setLoading(false);
+  };
+
+  const categories = [...new Set(downloads.map(d => d.category))];
+
+  return (
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+      {role === 'admin' && (
+        <div className="bg-[#111] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl space-y-8 border-t-4 border-t-blue-600">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-blue-500">
+              {editingDownload ? <Pencil className="w-6 h-6" /> : <PlusCircle className="w-6 h-6" />}
+              <h3 className="text-xl font-black uppercase tracking-tighter">
+                {editingDownload ? 'Editar Descarga ISO' : 'Agregar Nueva Descarga ISO'}
+              </h3>
+            </div>
+            {editingDownload && (
+              <button 
+                onClick={() => setEditingDownload(null)}
+                className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+              >
+                Cancelar Edición
+              </button>
+            )}
+          </div>
+          <form key={editingDownload?.id || 'new'} onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-1.5 flex flex-col">
+              <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Título</label>
+              <input name="title" required defaultValue={editingDownload?.title || ''} placeholder="Ej: Office 2024 LTSC" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            <div className="space-y-1.5 flex flex-col">
+              <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Enlace de Descarga</label>
+              <input name="link" required defaultValue={editingDownload?.link || ''} placeholder="https://..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            <div className="space-y-1.5 flex flex-col">
+              <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Categoría</label>
+              <div className="flex gap-2">
+                <input name="category" required defaultValue={editingDownload?.category || ''} placeholder="Ej: Office" className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-colors" />
+                <button disabled={loading} type="submit" className="bg-blue-600 text-white px-6 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-500 transition-all disabled:opacity-50">
+                  {editingDownload ? 'Actualizar' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {downloads.length === 0 ? (
+        <div className="border-2 border-dashed border-white/5 rounded-[3rem] p-20 text-center space-y-4">
+          <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Download className="w-10 h-10 text-white/20" />
+          </div>
+          <p className="text-white/30 font-black uppercase tracking-widest">No hay descargas disponibles por ahora</p>
+        </div>
+      ) : (
+        <div className="space-y-12">
+          {categories.map(cat => (
+            <div key={cat} className="space-y-6">
+              <div className="flex items-center gap-4">
+                <h4 className="text-lg font-black uppercase tracking-widest text-blue-500 whitespace-nowrap">{cat}</h4>
+                <div className="h-px bg-blue-500/20 flex-1" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {downloads.filter(d => d.category === cat).map(d => (
+                  <motion.div key={d.id} whileHover={{ y: -5 }} className="bg-[#111] border border-white/10 rounded-[2rem] p-8 flex flex-col gap-6 group shadow-2xl relative overflow-hidden">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all" />
+                    <div className="flex justify-between items-start z-10">
+                      <h4 className="text-xl font-black group-hover:text-blue-400 transition-colors">{d.title}</h4>
+                      <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 border border-blue-500/20"><Download className="w-5 h-5" /></div>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto z-10">
+                      {role === 'admin' ? (
+                        <div className="flex items-center gap-2 w-full">
+                          <button 
+                            onClick={() => {
+                              setEditingDownload(d);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="flex-1 bg-white/5 border border-white/10 text-white py-4 rounded-xl font-black hover:bg-white/10 transition-all text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"
+                          >
+                            <Pencil className="w-4 h-4" /> Editar
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(d.id)}
+                            className="p-4 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => window.open(d.link, '_blank')}
+                          className="flex-1 bg-white text-black py-4 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center"
+                        >
+                          Descargar ISO
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

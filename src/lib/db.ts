@@ -49,6 +49,7 @@ export function getDb() {
       primaryColor: '#3b82f6',
       telegramWebhookUrl: ''
     };
+    if (!db.downloads) db.downloads = [];
     if (!db.catalog || db.catalog.length === 0) {
       db.catalog = DEFAULT_CATALOG;
       saveDb(db);
@@ -61,6 +62,7 @@ export function getDb() {
       requests: [], 
       notifications: [], 
       catalog: DEFAULT_CATALOG, 
+      downloads: [],
       settings: { 
         telegramBotToken: '', 
         telegramChatId: '',
@@ -448,4 +450,50 @@ export function deleteCatalogItem(id: string) {
   db.catalog.splice(idx, 1);
   saveDb(db);
   return { success: true };
+}
+
+// Downloads Management
+export function getDownloads() {
+  return getDb().downloads || [];
+}
+
+export function addDownload(title: string, link: string, category: string) {
+  const db = getDb();
+  const newDownload = {
+    id: `dw_${crypto.randomUUID().slice(0, 8)}`,
+    title: title.trim(),
+    link: link.trim(),
+    category: category.trim(),
+    createdAt: new Date().toISOString()
+  };
+  if (!db.downloads) db.downloads = [];
+  db.downloads.push(newDownload);
+  saveDb(db);
+  return newDownload;
+}
+
+export function deleteDownload(id: string) {
+  const db = getDb();
+  if (!db.downloads) return { success: false, error: 'No hay descargas' };
+  const idx = db.downloads.findIndex((d: any) => d.id === id);
+  if (idx === -1) return { success: false, error: 'Descarga no encontrada' };
+  
+  db.downloads.splice(idx, 1);
+  saveDb(db);
+  return { success: true };
+}
+
+export function updateDownload(id: string, data: { title?: string, link?: string, category?: string }) {
+  const db = getDb();
+  if (!db.downloads) return { success: false, error: 'No hay descargas' };
+  const download = db.downloads.find((d: any) => d.id === id);
+  if (!download) return { success: false, error: 'Descarga no encontrada' };
+  
+  if (data.title !== undefined) download.title = data.title.trim();
+  if (data.link !== undefined) download.link = data.link.trim();
+  if (data.category !== undefined) download.category = data.category.trim();
+  
+  download.updatedAt = new Date().toISOString();
+  saveDb(db);
+  return { success: true, download };
 }
