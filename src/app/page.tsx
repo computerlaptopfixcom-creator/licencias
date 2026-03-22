@@ -102,7 +102,7 @@ export default function Dashboard() {
         fetch('/api/catalog'),
         fetch('/api/downloads'),
         currentUser ? fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.role === 'admin' ? 'admin' : currentUser.id })}) : Promise.resolve(null),
-        currentUser?.role === 'admin' ? fetch('/api/settings') : Promise.resolve(null)
+        fetch('/api/settings')
       ];
       
       const [resUsers, resLicenses, resRequests, resCatalog, resDownloads, resNotifs, resSettings] = await Promise.all(endpoints);
@@ -538,7 +538,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {activeTab === 'inventory' && (
+          {activeTab === 'inventory' && role === 'admin' && (
             <InventoryView 
               db={db} role={role} 
               inventoryFilter={inventoryFilter} setInventoryFilter={setInventoryFilter} 
@@ -562,17 +562,17 @@ export default function Dashboard() {
             />
           )}
 
-          {activeTab === 'users' && (
+          {activeTab === 'users' && role === 'admin' && (
             <UsersView 
               db={db} role={role} 
               createUser={createUser} 
               deleteUser={deleteUser}
               setViewUserLicenses={setViewUserLicenses} 
-              setShowAssignModal={setShowAssignModal} 
+              setShowAssignModal={setShowAssignModal}
             />
           )}
 
-          {activeTab === 'catalog' && (
+          {activeTab === 'catalog' && role === 'admin' && (
             <CatalogView db={db} role={role} setShowCatalogModal={setShowCatalogModal} />
           )}
 

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getInventoryStats } from '@/lib/db';
-import { withAuth } from '@/lib/auth';
+import { withAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  return withAuth(async () => {
+  return withAdmin(async () => {
     try {
       const stats = getInventoryStats();
       return NextResponse.json(stats);

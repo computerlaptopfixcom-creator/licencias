@@ -5,8 +5,14 @@ import { withAuth, withAdmin } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  return withAuth(async () => {
-    const requests = getRequests();
+  return withAuth(async (authUser) => {
+    let requests = getRequests();
+    
+    // Si no es admin, solo ver sus propias solicitudes
+    if (authUser.role !== 'admin') {
+      requests = requests.filter((r: any) => r.userId === authUser.userId);
+    }
+    
     return NextResponse.json(requests);
   }, request);
 }
