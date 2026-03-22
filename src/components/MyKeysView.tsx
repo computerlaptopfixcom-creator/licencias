@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlusCircle, Copy, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MyKeysViewProps {
@@ -12,7 +12,6 @@ interface MyKeysViewProps {
   PRODUCT_CATALOG: Record<string, string[]>;
   setShowRequestModal: (show: boolean) => void;
   triggerToast: (msg: string, type?: 'success'|'error') => void;
-  reportFailed: (id: string) => void;
   revealLicense: (id: string) => void;
 }
 
@@ -26,7 +25,6 @@ export function MyKeysView({
   PRODUCT_CATALOG,
   setShowRequestModal,
   triggerToast,
-  reportFailed,
   revealLicense
 }: MyKeysViewProps) {
   return (
@@ -111,13 +109,6 @@ export function MyKeysView({
                         <button onClick={() => { navigator.clipboard.writeText(l.key); triggerToast('Llave copiada al portapapeles'); }} className="p-1.5 hover:bg-blue-500/20 rounded-lg transition-colors group" title="Copiar Llave">
                           <Copy className="w-3.5 h-3.5 text-white/20 group-hover:text-blue-400" />
                         </button>
-                        {!l.reportedFailed ? (
-                          <button onClick={() => reportFailed(l.id)} className="p-1 hover:bg-red-500/20 rounded-lg transition-colors group" title="Reportar Falla">
-                            <AlertTriangle className="w-4 h-4 text-white/20 group-hover:text-red-500" />
-                          </button>
-                        ) : (
-                          <span className="text-[9px] text-red-500 font-black uppercase tracking-widest px-1.5 py-0.5 bg-red-500/10 rounded border border-red-500/20">Falla Reportada</span>
-                        )}
                       </div>
                     ) : (
                       <span className="text-white/30 tracking-[0.3em] font-mono select-none">•••••••••••••••••••••</span>
