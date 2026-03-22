@@ -788,7 +788,7 @@ export default function Dashboard() {
                   "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border",
                   role === 'admin' ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                 )}>
-                  {role === 'admin' ? 'Administrative Access' : 'Verified User'}
+                  {role === 'admin' ? 'Acceso Administrativo' : 'Usuario Verificado'}
                 </span>
               </div>
               <h2 className="text-[1.35rem] sm:text-3xl lg:text-4xl font-extrabold tracking-tight capitalize leading-none mt-1">
@@ -836,7 +836,7 @@ export default function Dashboard() {
                       <div className="bg-[#111] border border-white/10 rounded-3xl p-8 border-t-4 border-t-blue-500 shadow-xl">
                         <div className="flex items-center gap-4 mb-4">
                           <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500"><Key className="w-6 h-6" /></div>
-                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Keys Asignadas</span>
+                          <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">Llaves Asignadas</span>
                         </div>
                         <div className="text-5xl font-black tabular-nums">{stats?.assigned || 0}</div>
                       </div>
@@ -928,7 +928,7 @@ export default function Dashboard() {
                       {stats.lowStock.map((s: any) => (
                         <div key={s.product} className="bg-black/40 border border-white/5 p-4 rounded-2xl flex justify-between items-center">
                           <span className="text-sm font-bold text-white/80">{s.product}</span>
-                          <span className="bg-amber-500 text-black text-[10px] font-black px-2 py-1 rounded-lg">{s.count} left</span>
+                          <span className="bg-amber-500 text-black text-[10px] font-black px-2 py-1 rounded-lg">{s.count} restantes</span>
                         </div>
                       ))}
                     </div>
@@ -976,7 +976,7 @@ export default function Dashboard() {
                 <div className="bg-[#111] border border-white/10 rounded-[3rem] p-12 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-transparent opacity-50 transition-opacity group-hover:opacity-80" />
                   <div className="relative z-10">
-                    <h3 className="text-5xl font-black mb-6 tracking-tighter uppercase">SISTEMA CONTROL<br /><span className="text-blue-500">KEY MANAGER</span></h3>
+                    <h3 className="text-5xl font-black mb-6 tracking-tighter uppercase">SISTEMA CONTROL<br /><span className="text-blue-500">GESTOR DE LLAVES</span></h3>
                     <p className="text-white/40 text-lg max-w-xl mb-10 leading-relaxed font-medium">Administra licencias, gestiona usuarios y monitorea el inventario en tiempo real con seguridad total.</p>
                   </div>
                 </div>
