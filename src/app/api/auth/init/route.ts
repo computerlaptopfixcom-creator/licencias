@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb, saveDb } from '@/lib/db';
+import { getDb, createInitialAdmin } from '@/lib/db';
 import { signToken, setAuthCookie } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -39,18 +39,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'La contraseña debe tener al menos 8 caracteres' }, { status: 400 });
     }
 
-    const adminUser = {
-      id: `u_${crypto.randomUUID().slice(0, 8)}`,
-      name: name.trim(),
-      email: '',
-      password: await bcrypt.hash(password, 10),
-      role: 'admin',
-      mustChangeCredentials: false,
-      createdAt: new Date().toISOString()
-    };
-
-    db.users.push(adminUser);
-    saveDb(db);
+    const adminUser = createInitialAdmin(name.trim(), await bcrypt.hash(password, 10));
+    if (!adminUser) {
+      return NextResponse.json({ error: 'Error al configurar administrador' }, { status: 500 });
+    }
 
     // Auto-login the new admin
     const token = signToken({
@@ -60,7 +52,7 @@ export async function POST(request: Request) {
       mustChangeCredentials: false
     });
 
-    const { password: _, ...safeUser } = adminUser;
+    const { password: _, ...safeUser } = adminUser as any;
     const response = NextResponse.json({ success: true, user: safeUser });
     setAuthCookie(response, token);
 

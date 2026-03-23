@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb, saveDb } from '@/lib/db';
+import { getDb, updateUserCredentials } from '@/lib/db';
 import { withAuth, signToken, setAuthCookie } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
@@ -30,24 +30,22 @@ export async function POST(request: Request) {
       }
 
       // Update credentials
-      dbUser.name = newName;
-      dbUser.password = await bcrypt.hash(newPassword, 10);
-      dbUser.mustChangeCredentials = false;
-      
-      saveDb(db);
+      if (!updateUserCredentials(dbUser.id, newName, await bcrypt.hash(newPassword, 10))) {
+         return NextResponse.json({ error: 'Error al actualizar credenciales' }, { status: 500 });
+      }
 
       // Create a fresh token reflecting the changes
       const newToken = signToken({ 
         userId: dbUser.id, 
         role: dbUser.role, 
-        name: dbUser.name,
+        name: newName,
         mustChangeCredentials: false
       });
 
       const { password: _, ...safeUser } = dbUser;
       const response = NextResponse.json({ 
         success: true, 
-        user: { ...safeUser, mustChangeCredentials: false } 
+        user: { ...safeUser, name: newName, mustChangeCredentials: false } 
       });
       
       setAuthCookie(response, newToken);

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { findUser, getDb, saveDb } from '@/lib/db';
+import { findUser, getDb, updateUserPassword } from '@/lib/db';
 import { signToken, setAuthCookie } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
@@ -85,12 +85,7 @@ export async function POST(request: Request) {
       // Legacy plain-text — migrate to hash on successful login
       passwordMatch = user.password === password;
       if (passwordMatch) {
-        const db = getDb();
-        const dbUser = db.users.find((u: any) => u.id === user.id);
-        if (dbUser) {
-          dbUser.password = await bcrypt.hash(password, 10);
-          saveDb(db);
-        }
+         updateUserPassword(user.id, await bcrypt.hash(password, 10));
       }
     }
 

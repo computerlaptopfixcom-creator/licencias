@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb, saveDb } from '@/lib/db';
+import { getDb, updateUserPassword } from '@/lib/db';
 import { withAuth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
@@ -35,9 +35,7 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Contraseña actual incorrecta' }, { status: 401 });
         }
       }
-
-      user.password = await bcrypt.hash(newPassword, 10);
-      saveDb(db);
+      updateUserPassword(user.id, await bcrypt.hash(newPassword, 10));
 
       return NextResponse.json({ success: true });
     } catch (error) {

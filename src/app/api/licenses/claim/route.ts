@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb, saveDb } from '@/lib/db';
+import { getDb, assignLicense } from '@/lib/db';
 import { withAdmin } from '@/lib/auth';
 
 export async function POST(request: Request) {
@@ -14,12 +14,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'No hay stock' }, { status: 404 });
       }
 
-      available.status = 'assigned';
-      available.assignedTo = userId;
-      available.assignedAt = new Date().toISOString();
-      saveDb(db);
+      const success = assignLicense(available.id, userId);
+      if (!success) {
+        return NextResponse.json({ error: 'La licencia acaba de ser tomada por otro usuario.' }, { status: 409 });
+      }
 
-      return NextResponse.json(available);
+      return NextResponse.json({ ...available, status: 'assigned', assignedTo: userId });
     } catch (error) {
       return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
