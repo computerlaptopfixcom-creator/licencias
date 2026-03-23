@@ -397,6 +397,27 @@ export default function Dashboard() {
     } catch (e) {}
   };
 
+  const replaceLicense = async (licenseId: string) => {
+    if (!window.confirm("¿Reemplazar automáticamente usando el inventario disponible?")) return;
+    try {
+      const res = await fetch('/api/licenses/replace', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ licenseId })
+      });
+      if (res.ok) {
+        triggerToast("¡Licencia Reemplazada Exitosamente!");
+        refreshData();
+        refreshStats();
+      } else {
+        const data = await res.json();
+        triggerToast(data.error || "Error", "error");
+      }
+    } catch (e) {
+      triggerToast("Error de conexión", "error");
+    }
+  };
+
   const requestLicense = async (product: string, count: number) => {
     try {
       const res = await fetch('/api/requests', {
@@ -563,6 +584,7 @@ export default function Dashboard() {
               PRODUCT_CATALOG={PRODUCT_CATALOG} 
               addLicensesBulk={addLicensesBulk} 
               availableLicenses={availableLicenses} assignedLicenses={assignedLicenses} reportedLicensesCount={reportedLicensesCount} 
+              replaceLicense={replaceLicense}
             />
           )}
 

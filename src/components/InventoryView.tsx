@@ -17,6 +17,7 @@ interface InventoryViewProps {
   availableLicenses: number;
   assignedLicenses: number;
   reportedLicensesCount: number;
+  replaceLicense: (id: string) => void;
 }
 
 export function InventoryView({
@@ -32,7 +33,8 @@ export function InventoryView({
   addLicensesBulk,
   availableLicenses,
   assignedLicenses,
-  reportedLicensesCount
+  reportedLicensesCount,
+  replaceLicense
 }: InventoryViewProps) {
   if (role !== 'admin') return null;
 
@@ -160,6 +162,7 @@ export function InventoryView({
                     <>
                       <th className="px-8 py-4">Asignado A</th>
                       <th className="px-8 py-4">Fecha de Asignación</th>
+                      {inventoryStatusFilter === 'reported' && <th className="px-8 py-4 text-right">Acciones</th>}
                     </>
                   )}
                 </tr>
@@ -197,6 +200,17 @@ export function InventoryView({
                             <td className="px-8 py-5 text-white/40 text-xs">
                               {l.assignedAt ? new Date(l.assignedAt).toLocaleString() : '—'}
                             </td>
+                            {inventoryStatusFilter === 'reported' && (
+                              <td className="px-8 py-5 text-right">
+                                <button 
+                                  onClick={() => replaceLicense(l.id)}
+                                  className="px-4 py-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                                  title="Utilizará otra licencia de stock disponible para reponer este fallo."
+                                >
+                                  🔄 Reemplazar Auto
+                                </button>
+                              </td>
+                            )}
                           </>
                         )}
                       </tr>
