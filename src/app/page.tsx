@@ -658,14 +658,14 @@ export default function Dashboard() {
                  </div>
                  <div className="space-y-1.5">
                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Icono de Marca (Opcional)</label>
-                   <select name="iconType" defaultValue={showCatalogModal.item?.iconType || 'Package'} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors appearance-none bg-[#0a0a0a]">
-                     <option value="Package">📦 Genérico (Package)</option>
-                     <option value="ShieldCheck">🛡️ Escudo / Antivirus (ShieldCheck)</option>
-                     <option value="Monitor">🖥️ Sistema / OS (Monitor)</option>
-                     <option value="Gamepad2">🎮 Juegos (Gamepad2)</option>
-                     <option value="Music">🎵 Multimedia (Music)</option>
-                     <option value="FileText">📄 Ofimática (FileText)</option>
-                     <option value="Cloud">☁️ Nube / Server (Cloud)</option>
+                   <select name="iconType" defaultValue={showCatalogModal.item?.iconType || 'Package'} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors appearance-none bg-[#0a0a0a] text-white">
+                     <option className="bg-[#0a0a0a] text-white" value="Package">📦 Genérico (Package)</option>
+                     <option className="bg-[#0a0a0a] text-white" value="ShieldCheck">🛡️ Escudo / Antivirus (ShieldCheck)</option>
+                     <option className="bg-[#0a0a0a] text-white" value="Monitor">🖥️ Sistema / OS (Monitor)</option>
+                     <option className="bg-[#0a0a0a] text-white" value="Gamepad2">🎮 Juegos (Gamepad2)</option>
+                     <option className="bg-[#0a0a0a] text-white" value="Music">🎵 Multimedia (Music)</option>
+                     <option className="bg-[#0a0a0a] text-white" value="FileText">📄 Ofimática (FileText)</option>
+                     <option className="bg-[#0a0a0a] text-white" value="Cloud">☁️ Nube / Server (Cloud)</option>
                    </select>
                  </div>
                  <button type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-600/20 active:scale-95 transition-all">{showCatalogModal.mode === 'create' ? 'Crear Producto' : 'Actualizar Producto'}</button>
@@ -688,11 +688,11 @@ export default function Dashboard() {
                }} className="space-y-6 text-left">
                  <div className="space-y-1.5">
                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Seleccionar Producto</label>
-                   <select name="product" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-blue-500 outline-none transition-colors appearance-none bg-[#0a0a0a]">
+                   <select name="product" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-blue-500 outline-none transition-colors appearance-none bg-[#0a0a0a] text-white">
                      {Object.entries(PRODUCT_CATALOG).map(([cat, items]) => (
-                       <optgroup key={cat} label={cat}>
+                       <optgroup key={cat} label={cat} className="bg-[#0a0a0a] text-white font-bold">
                          {items.map(item => (
-                           <option key={item} value={item}>{item} ({db.licenses.filter(l => l.product === item && l.status === 'available').length} disponibles)</option>
+                           <option className="bg-[#0a0a0a] text-white font-normal" key={item} value={item}>{item} ({db.licenses.filter(l => l.product === item && l.status === 'available').length} disponibles)</option>
                          ))}
                        </optgroup>
                      ))}
@@ -757,11 +757,11 @@ export default function Dashboard() {
               }} className="space-y-6 text-left">
                 <div className="space-y-1.5 flex flex-col">
                   <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Seleccionar Producto</label>
-                  <select name="product" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-blue-500 outline-none appearance-none bg-[#0a0a0a]">
+                  <select name="product" required className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-blue-500 outline-none appearance-none bg-[#0a0a0a] text-white">
                     {Object.entries(PRODUCT_CATALOG).map(([cat, items]) => (
-                      <optgroup key={cat} label={cat} className="bg-[#0a0a0a]">
+                      <optgroup key={cat} label={cat} className="bg-[#0a0a0a] text-white font-bold">
                         {items.map(item => (
-                          <option key={item} value={item} className="bg-[#0a0a0a]">{item}</option>
+                          <option key={item} value={item} className="bg-[#0a0a0a] text-white font-normal">{item}</option>
                         ))}
                       </optgroup>
                     ))}
