@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Settings, ShieldCheck, ShieldAlert, Key, LogOut } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -20,6 +20,9 @@ export function SettingsView({
   changePassword,
   user
 }: SettingsViewProps) {
+  const [showPassForm, setShowPassForm] = useState(false);
+  const [newPass, setNewPass] = useState('');
+
   return (
     <div className="space-y-12 pb-20">
       <div className="max-w-4xl space-y-12">
@@ -109,11 +112,49 @@ export function SettingsView({
               <div className="p-3 bg-white/5 rounded-2xl border border-white/10"><ShieldCheck className="w-6 h-6 text-white/20" /></div>
             </div>
             <div className="h-px bg-white/5" />
-            <button onClick={() => {
-              const pass = prompt("Nueva contraseña (mínimo 6 caracteres):");
-              if (pass && pass.length >= 6) changePassword(pass);
-              else if (pass) alert("Demasiado corta");
-            }} className="w-full py-4 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/5 transition-all mb-4">Cambiar mi Contraseña</button>
+            {!showPassForm ? (
+              <button 
+                onClick={() => setShowPassForm(true)} 
+                className="w-full py-4 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/5 active:scale-95 transition-all mb-4"
+              >
+                Cambiar mi Contraseña
+              </button>
+            ) : (
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (newPass.length >= 6) {
+                  changePassword(newPass);
+                  setShowPassForm(false);
+                  setNewPass('');
+                }
+              }} className="bg-[#0a0a0a] border border-blue-500/20 rounded-[2rem] p-6 sm:p-8 mb-4 shadow-xl relative overflow-hidden animate-in slide-in-from-top-4 duration-300">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <Key className="w-5 h-5 text-blue-500" />
+                    <h4 className="text-lg font-black uppercase tracking-tighter">Nueva Contraseña Segura</h4>
+                  </div>
+                  <button type="button" onClick={() => setShowPassForm(false)} className="text-[10px] text-white/40 hover:text-white uppercase font-black transition-colors">Cancelar</button>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <input 
+                    type="text" 
+                    autoFocus 
+                    required 
+                    minLength={6} 
+                    value={newPass} 
+                    onChange={e => setNewPass(e.target.value)} 
+                    placeholder="Escribe aquí (Min. 6 caracteres)" 
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-sm focus:border-blue-500 outline-none transition-colors" 
+                  />
+                  <button 
+                    type="submit" 
+                    className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            )}
             
             <div className="p-6 bg-red-500/5 border border-red-500/10 rounded-3xl flex items-center justify-between group cursor-pointer hover:bg-red-500/10 transition-all">
                <div className="flex items-center gap-4">
