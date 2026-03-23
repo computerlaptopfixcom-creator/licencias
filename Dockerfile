@@ -23,9 +23,8 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# Create data directory and copy template
+# Create data directory
 RUN mkdir -p src/data
-COPY src/data/database.template.json src/data/database.template.json
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /docker-entrypoint.sh
