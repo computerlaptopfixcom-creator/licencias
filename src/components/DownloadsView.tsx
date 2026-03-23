@@ -137,15 +137,16 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
                           </button>
                         </div>
                       ) : (
-                        <a 
-                          href={d.link}
-                          download={`${d.title.replace(/[^a-zA-Z0-9-]/g, '_')}.iso`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 bg-white text-black py-4 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center block"
+                        <button 
+                          onClick={() => {
+                            let url = d.link;
+                            if (!url.startsWith('http')) url = 'https://' + url;
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="flex-1 bg-white text-black py-4 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center"
                         >
                           Descargar ISO
-                        </a>
+                        </button>
                       )}
                     </div>
                   </motion.div>
