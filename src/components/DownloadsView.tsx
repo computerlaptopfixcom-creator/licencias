@@ -109,9 +109,13 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
                 {downloads.filter(d => d.category === cat).map(d => (
                   <motion.div key={d.id} whileHover={{ y: -5 }} className="bg-[#111] border border-white/10 rounded-[2rem] p-8 flex flex-col gap-6 group shadow-2xl relative overflow-hidden">
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all" />
-                    <div className="flex justify-between items-start z-10">
-                      <h4 className="text-xl font-black group-hover:text-blue-400 transition-colors">{d.title}</h4>
-                      <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 border border-blue-500/20"><Download className="w-5 h-5" /></div>
+                    <div className="flex justify-between items-start z-10 w-full">
+                      <h4 className="text-xl font-black group-hover:text-blue-400 transition-colors pr-2 break-all">{d.title}</h4>
+                      {role !== 'admin' && (
+                        <div className="p-3 shrink-0 bg-blue-500/10 rounded-2xl text-blue-500 border border-blue-500/20">
+                          <Download className="w-5 h-5" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between mt-auto z-10">
                       {role === 'admin' ? (
