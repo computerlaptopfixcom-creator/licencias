@@ -440,6 +440,7 @@ export default function Dashboard() {
       name: target.name.value,
       category: target.category.value,
       price: Number(target.price.value),
+      iconType: target.iconType.value,
       ...(showCatalogModal.item && { id: showCatalogModal.item.id })
     };
     try {
@@ -560,6 +561,7 @@ export default function Dashboard() {
                           product={item.name} 
                           stock={db.licenses.filter(l => l.product === item.name && l.status === 'available').length} 
                           price={item.price}
+                          iconType={item.iconType}
                           onClick={() => requestLicense(item.name, 1)} 
                         />
                       ))}
@@ -653,6 +655,18 @@ export default function Dashboard() {
                      <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Precio</label>
                      <input required type="number" name="price" defaultValue={showCatalogModal.item?.price || 1} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors" />
                    </div>
+                 </div>
+                 <div className="space-y-1.5">
+                   <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Icono de Marca (Opcional)</label>
+                   <select name="iconType" defaultValue={showCatalogModal.item?.iconType || 'Package'} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors appearance-none bg-[#0a0a0a]">
+                     <option value="Package">📦 Genérico (Package)</option>
+                     <option value="ShieldCheck">🛡️ Escudo / Antivirus (ShieldCheck)</option>
+                     <option value="Monitor">🖥️ Sistema / OS (Monitor)</option>
+                     <option value="Gamepad2">🎮 Juegos (Gamepad2)</option>
+                     <option value="Music">🎵 Multimedia (Music)</option>
+                     <option value="FileText">📄 Ofimática (FileText)</option>
+                     <option value="Cloud">☁️ Nube / Server (Cloud)</option>
+                   </select>
                  </div>
                  <button type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-600/20 active:scale-95 transition-all">{showCatalogModal.mode === 'create' ? 'Crear Producto' : 'Actualizar Producto'}</button>
                </form>

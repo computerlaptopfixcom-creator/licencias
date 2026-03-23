@@ -512,7 +512,7 @@ export function getCatalog() {
   return db.prepare('SELECT * FROM catalog').all();
 }
 
-export function addCatalogItem(category: string, name: string, price: number) {
+export function addCatalogItem(category: string, name: string, price: number, iconType: string | null = null) {
   const existing = db.prepare(`SELECT 1 FROM catalog WHERE name=?`).get(name);
   if (existing) return null;
   
@@ -521,7 +521,7 @@ export function addCatalogItem(category: string, name: string, price: number) {
     category,
     name,
     price,
-    iconType: null
+    iconType
   };
   db.prepare(`INSERT INTO catalog (id, category, name, price, iconType) VALUES (?, ?, ?, ?, ?)`)
     .run(item.id, item.category, item.name, item.price, item.iconType);

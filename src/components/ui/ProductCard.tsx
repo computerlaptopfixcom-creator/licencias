@@ -1,20 +1,33 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Package } from 'lucide-react';
+import { Package, ShieldCheck, Monitor, Gamepad2, Music, FileText, Cloud } from 'lucide-react';
+
+const iconMap: Record<string, React.ElementType> = {
+  Package,
+  ShieldCheck,
+  Monitor,
+  Gamepad2,
+  Music,
+  FileText,
+  Cloud
+};
 
 interface ProductCardProps {
   product: string;
   stock: number;
   price?: number;
+  iconType?: string;
   onClick: () => void;
 }
 
-export function ProductCard({ product, stock, price, onClick }: ProductCardProps) {
+export function ProductCard({ product, stock, price, iconType, onClick }: ProductCardProps) {
+  const IconComponent = iconMap[iconType || 'Package'] || Package;
+
   return (
     <motion.div whileHover={{ y: -5 }} className="bg-[#111] border border-white/10 rounded-[2rem] p-8 flex flex-col gap-6 group shadow-2xl">
       <div className="flex justify-between items-start">
         <h4 className="text-2xl font-black">{product}</h4>
-        <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 border border-blue-500/20"><Package className="w-6 h-6" /></div>
+        <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 border border-blue-500/20"><IconComponent className="w-6 h-6" /></div>
       </div>
       <div className="flex items-end justify-between mt-auto">
         <div className="flex flex-col">
