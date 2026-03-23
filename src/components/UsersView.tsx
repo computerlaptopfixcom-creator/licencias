@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Users, PlusCircle, Trash2 } from 'lucide-react';
 
 interface UsersViewProps {
@@ -18,6 +18,10 @@ export function UsersView({
   setViewUserLicenses,
   setShowAssignModal
 }: UsersViewProps) {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserPass, setNewUserPass] = useState('');
+
   if (role !== 'admin') return null;
 
   return (
@@ -28,14 +32,45 @@ export function UsersView({
           <div className="p-2.5 bg-blue-500/10 rounded-xl border border-blue-500/20"><Users className="w-5 h-5 text-blue-500" /></div>
           <h3 className="font-black text-lg sm:text-xl tracking-tighter uppercase">Usuarios</h3>
         </div>
-        <button onClick={() => {
-          const name = prompt("Nombre del Usuario:");
-          const password = prompt("Asignar Contraseña (dejar vacío para '123456'):");
-          if (name) createUser(name, password || '123456');
-        }} className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 active:scale-95 text-center">
-          <PlusCircle className="w-4 h-4" /> Crear Nuevo
-        </button>
+        {!showCreateForm && (
+          <button onClick={() => setShowCreateForm(true)} className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 active:scale-95 text-center">
+            <PlusCircle className="w-4 h-4" /> Crear Nuevo
+          </button>
+        )}
       </div>
+
+      {showCreateForm && (
+        <div className="bg-[#111] border border-blue-500/20 rounded-[2rem] p-6 sm:p-8 shadow-2xl relative overflow-hidden animate-in slide-in-from-top-4 duration-300">
+          <div className="absolute top-0 right-0 p-4">
+             <button onClick={() => setShowCreateForm(false)} className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">Cancelar</button>
+          </div>
+          <div className="flex items-center gap-3 mb-6">
+            <PlusCircle className="w-6 h-6 text-blue-500" />
+            <h4 className="text-xl font-black uppercase tracking-tighter">Crear Nuevo Usuario</h4>
+          </div>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (newUserName) {
+              createUser(newUserName, newUserPass || '123456');
+              setShowCreateForm(false);
+              setNewUserName('');
+              setNewUserPass('');
+            }
+          }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5 flex flex-col">
+               <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Nombre de Usuario</label>
+               <input autoFocus required value={newUserName} onChange={e => setNewUserName(e.target.value)} placeholder="Ej: Juan Perez" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            <div className="space-y-1.5 flex flex-col">
+               <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Contraseña Segura</label>
+               <input required value={newUserPass} onChange={e => setNewUserPass(e.target.value)} placeholder="Mínimo 6 caracteres" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-colors" />
+            </div>
+            <div className="flex items-end">
+               <button type="submit" className="w-full h-[46px] bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-600/20 active:scale-95">Registrar Usuario</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Mobile Card View */}
       <div className="lg:hidden space-y-3">

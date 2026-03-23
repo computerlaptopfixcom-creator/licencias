@@ -283,7 +283,7 @@ export function addUser(name: string, email?: string, password?: string, _role?:
     email: email || '',
     password: password || '',
     role: _role || 'user',
-    mustChangeCredentials: 1,
+    mustChangeCredentials: 0,
     telegramUserId: null,
     createdAt: new Date().toISOString()
   };
