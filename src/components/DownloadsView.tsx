@@ -137,12 +137,15 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
                           </button>
                         </div>
                       ) : (
-                        <button 
-                          onClick={() => window.open(d.link, '_blank')}
-                          className="flex-1 bg-white text-black py-4 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center"
+                        <a 
+                          href={d.link}
+                          download={`${d.title.replace(/[^a-zA-Z0-9-]/g, '_')}.iso`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-white text-black py-4 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center block"
                         >
                           Descargar ISO
-                        </button>
+                        </a>
                       )}
                     </div>
                   </motion.div>
