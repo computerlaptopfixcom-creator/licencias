@@ -57,7 +57,8 @@ export async function POST(request: Request) {
     setAuthCookie(response, token);
 
     return response;
-  } catch (error) {
-    return NextResponse.json({ error: 'Error al configurar el sistema' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Init Setup Error:', error);
+    return NextResponse.json({ error: error.message || 'Error al configurar el sistema' }, { status: 500 });
   }
 }
