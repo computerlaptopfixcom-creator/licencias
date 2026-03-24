@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Pencil, PlusCircle, Download, Trash2, Link2, FolderOpen, Sparkles } from 'lucide-react';
 
@@ -19,9 +19,10 @@ interface DownloadsViewProps {
   downloads: DownloadItem[];
   role: string;
   onRefresh: () => void;
+  userCategories?: string[];
 }
 
-export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps) {
+export function DownloadsView({ downloads, role, onRefresh, userCategories = [] }: DownloadsViewProps) {
   const [loading, setLoading] = useState(false);
   const [editingDownload, setEditingDownload] = useState<DownloadItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('Todas');
@@ -40,9 +41,15 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
     const discovered = [...new Set(sortedDownloads.map((download) => download.category))]
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-
     return [...new Set([...PRESET_CATEGORIES, ...discovered])];
   }, [sortedDownloads]);
+
+  const relatedDownloads = useMemo(
+    () => role === 'user'
+      ? sortedDownloads.filter((download) => userCategories.includes(download.category)).slice(0, 4)
+      : [],
+    [role, sortedDownloads, userCategories]
+  );
 
   const featuredDownloads = useMemo(
     () => sortedDownloads.filter((download) => download.featured).slice(0, 3),
@@ -115,10 +122,7 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
               </h3>
             </div>
             {editingDownload && (
-              <button
-                onClick={() => setEditingDownload(null)}
-                className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors"
-              >
+              <button onClick={() => setEditingDownload(null)} className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors">
                 Cancelar edicion
               </button>
             )}
@@ -170,6 +174,32 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
         </div>
       ) : (
         <div className="space-y-12">
+          {role === 'user' && relatedDownloads.length > 0 && (
+            <section className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+                  <Download className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black uppercase tracking-tighter text-white">Relacionadas con tus productos</h3>
+                  <p className="text-white/35 text-xs uppercase tracking-widest font-bold">Lo mas util segun tus licencias actuales</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                {relatedDownloads.map((download) => (
+                  <motion.div key={download.id} whileHover={{ y: -5 }} className="bg-[#111] border border-blue-500/10 rounded-[2rem] p-6 flex flex-col gap-4 shadow-2xl">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-300">{download.category}</span>
+                    <h4 className="text-lg font-black text-white">{download.title}</h4>
+                    {download.description && <p className="text-sm text-white/55">{download.description}</p>}
+                    <button onClick={() => openDownload(download.link)} className="mt-auto bg-white text-black py-3 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center">
+                      Abrir descarga
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {featuredDownloads.length > 0 && (
             <section className="space-y-6">
               <div className="flex items-center gap-4">
@@ -204,11 +234,7 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
           <section className="space-y-6">
             <div className="flex flex-wrap gap-3">
               {['Todas', ...categories].map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${selectedCategory === category ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-600/20' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white'}`}
-                >
+                <button key={category} onClick={() => setSelectedCategory(category)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${selectedCategory === category ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-600/20' : 'bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white'}`}>
                   {category}
                 </button>
               ))}
@@ -234,7 +260,6 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
                       {items.map((download) => (
                         <motion.div key={download.id} whileHover={{ y: -5 }} className="bg-[#111] border border-white/10 rounded-[2rem] p-8 flex flex-col gap-6 group shadow-2xl relative overflow-hidden">
                           <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all" />
-
                           <div className="space-y-4 z-10">
                             <div className="flex justify-between items-start gap-3 w-full">
                               <div className="space-y-2 pr-2">
@@ -250,11 +275,7 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
                                 </div>
                               )}
                             </div>
-
-                            {download.description && (
-                              <p className="text-sm text-white/55 leading-relaxed">{download.description}</p>
-                            )}
-
+                            {download.description && <p className="text-sm text-white/55 leading-relaxed">{download.description}</p>}
                             <div className="space-y-2 text-[10px] font-black uppercase tracking-widest text-white/35">
                               <div className="flex items-center gap-2">
                                 <Link2 className="w-3.5 h-3.5" />
@@ -263,31 +284,18 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
                               <p>Actualizado: {new Date(download.updatedAt || download.createdAt || Date.now()).toLocaleDateString()}</p>
                             </div>
                           </div>
-
                           <div className="flex items-center justify-between mt-auto z-10">
                             {role === 'admin' ? (
                               <div className="flex items-center gap-2 w-full">
-                                <button
-                                  onClick={() => {
-                                    setEditingDownload(download);
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                  }}
-                                  className="flex-1 bg-white/5 border border-white/10 text-white py-4 rounded-xl font-black hover:bg-white/10 transition-all text-[11px] uppercase tracking-widest flex items-center justify-center gap-2"
-                                >
+                                <button onClick={() => { setEditingDownload(download); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 bg-white/5 border border-white/10 text-white py-4 rounded-xl font-black hover:bg-white/10 transition-all text-[11px] uppercase tracking-widest flex items-center justify-center gap-2">
                                   <Pencil className="w-4 h-4" /> Editar
                                 </button>
-                                <button
-                                  onClick={() => handleDelete(download.id)}
-                                  className="p-4 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                                >
+                                <button onClick={() => handleDelete(download.id)} className="p-4 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                onClick={() => openDownload(download.link)}
-                                className="flex-1 bg-white text-black py-4 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center"
-                              >
+                              <button onClick={() => openDownload(download.link)} className="flex-1 bg-white text-black py-4 rounded-xl font-black hover:scale-[1.02] active:scale-95 transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-white/10 text-center">
                                 Abrir descarga
                               </button>
                             )}
@@ -305,3 +313,4 @@ export function DownloadsView({ downloads, role, onRefresh }: DownloadsViewProps
     </div>
   );
 }
+

@@ -22,17 +22,15 @@ function getWebhookSecret(): string {
     .slice(0, 32);
 }
 
-const WEBHOOK_SECRET = getWebhookSecret();
-
-// Export the secret so the setup endpoint can use it
-export { WEBHOOK_SECRET };
+// Export the secret getter so the setup endpoint can use it
+export { getWebhookSecret };
 
 // Telegram Bot Webhook — handles incoming messages and commands
 export async function POST(request: Request) {
   try {
     // ── Authenticate: verify the secret token header ──
     const secretHeader = request.headers.get('x-telegram-bot-api-secret-token');
-    if (secretHeader !== WEBHOOK_SECRET) {
+    if (secretHeader !== getWebhookSecret()) {
       return NextResponse.json({ ok: false }, { status: 403 });
     }
 

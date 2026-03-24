@@ -29,7 +29,7 @@ import { SetupAccountView } from '@/components/SetupAccountView';
 import { FirstRunSetup } from '@/components/FirstRunSetup';
 import { ProductCard } from '@/components/ui/ProductCard';
 
-const INITIAL_DB = { users: [], licenses: [], requests: [], catalog: [], downloads: [] };
+const INITIAL_DB = { users: [], licenses: [], requests: [], catalog: [], downloads: [], movements: [] };
 const INITIAL_SETTINGS = {
   telegramBotToken: '',
   telegramChatId: '',
@@ -41,7 +41,7 @@ const INITIAL_SETTINGS = {
 };
 
 export default function Dashboard() {
-  const [db, setDb] = useState<{ users: any[], licenses: any[], requests: any[], catalog: any[], downloads: any[] }>(INITIAL_DB);
+  const [db, setDb] = useState<{ users: any[], licenses: any[], requests: any[], catalog: any[], downloads: any[], movements: any[] }>(INITIAL_DB);
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
@@ -90,11 +90,12 @@ export default function Dashboard() {
         fetch('/api/requests'),
         fetch('/api/catalog'),
         fetch('/api/downloads'),
+        fetch('/api/movements'),
         currentUser ? fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: isAdmin ? 'admin' : currentUser.id })}) : Promise.resolve(null),
         fetch('/api/settings')
       ];
       
-      const [resUsers, resLicenses, resRequests, resCatalog, resDownloads, resNotifs, resSettings] = await Promise.all(requestsPromise);
+      const [resUsers, resLicenses, resRequests, resCatalog, resDownloads, resMovements, resNotifs, resSettings] = await Promise.all(requestsPromise);
       
       if (resLicenses?.status === 401 || resRequests?.status === 401 || resSettings?.status === 401) {
         if (currentUser) {
@@ -107,6 +108,7 @@ export default function Dashboard() {
       const licenses = resLicenses && resLicenses.ok ? await resLicenses.clone().json().catch(() => []) : [];
       const requests = resRequests && resRequests.ok ? await resRequests.clone().json().catch(() => []) : [];
       const catalog = resCatalog && resCatalog.ok ? await resCatalog.clone().json().catch(() => []) : [];
+      const movements = resMovements && resMovements.ok ? await resMovements.clone().json().catch(() => []) : [];
       const notifs = resNotifs && resNotifs.ok ? await resNotifs.clone().json().catch(() => []) : [];
       const downloads = resDownloads && resDownloads.ok ? await resDownloads.clone().json().catch(() => []) : [];
       
@@ -115,7 +117,8 @@ export default function Dashboard() {
         licenses: Array.isArray(licenses) ? licenses : [], 
         requests: Array.isArray(requests) ? requests : [], 
         catalog: Array.isArray(catalog) ? catalog : [],
-        downloads: Array.isArray(downloads) ? downloads : []
+        downloads: Array.isArray(downloads) ? downloads : [],
+        movements: Array.isArray(movements) ? movements : []
       });
 
       if (resSettings && resSettings.ok) {
@@ -316,6 +319,7 @@ export default function Dashboard() {
   };
 
   const approveRequest = async (id: string, userId: string, product: string, count: number) => {
+    const reviewNote = window.prompt('Nota opcional para esta aprobacion:', '') || '';
     try {
       const assignRes = await fetch('/api/users/assign-batch', {
         method: 'POST',
@@ -325,41 +329,42 @@ export default function Dashboard() {
 
       if (!assignRes.ok) {
         const data = await assignRes.json();
-        triggerToast(data.error || "No se pudo asignar el stock", "error");
+        triggerToast(data.error || 'No se pudo asignar el stock', 'error');
         return;
       }
 
       const resolveRes = await fetch('/api/requests/resolve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reqId: id })
+        body: JSON.stringify({ reqId: id, reviewNote })
       });
 
       if (resolveRes.ok) {
-        triggerToast("Solicitud aprobada");
+        triggerToast('Solicitud aprobada');
         refreshData();
         refreshStats();
       } else {
         const data = await resolveRes.json();
-        triggerToast(data.error, "error");
+        triggerToast(data.error, 'error');
       }
-    } catch (e) { triggerToast("Error de conexión", "error"); }
+    } catch (e) { triggerToast('Error de conexion', 'error'); }
   };
 
   const rejectRequest = async (reqId: string) => {
-    if (!window.confirm("¿Rechazar solicitud?")) return;
+    if (!window.confirm('Rechazar solicitud?')) return;
+    const reviewNote = window.prompt('Motivo o nota para el usuario:', '') || '';
     try {
       const res = await fetch('/api/requests/reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reqId })
+        body: JSON.stringify({ reqId, reviewNote })
       });
       if (res.ok) {
-        triggerToast("Solicitud rechazada", "error");
+        triggerToast('Solicitud rechazada', 'error');
         refreshData();
         refreshStats();
       }
-    } catch (e) { triggerToast("Error", "error"); }
+    } catch (e) { triggerToast('Error', 'error'); }
   };
 
   const revealLicense = async (licenseId: string) => {
@@ -370,17 +375,17 @@ export default function Dashboard() {
         body: JSON.stringify({ licenseId, userId: user.id })
       });
       if (res.ok) {
-        triggerToast(`¡Licencia revelada!`);
+        triggerToast('Licencia revelada');
         refreshData();
       } else {
         const data = await res.json();
-        triggerToast(data.error, "error");
+        triggerToast(data.error, 'error');
       }
-    } catch (e) { triggerToast("Error", "error"); }
+    } catch (e) { triggerToast('Error', 'error'); }
   };
 
   const reportFailed = async (licenseId: string) => {
-    if (!window.confirm("¿Reportar falla?")) return;
+    if (!window.confirm('Reportar falla?')) return;
     try {
       const res = await fetch('/api/licenses/report-failed', {
         method: 'POST',
@@ -388,14 +393,14 @@ export default function Dashboard() {
         body: JSON.stringify({ userId: user.id, licenseId })
       });
       if (res.ok) {
-        triggerToast("Reportado", "error");
+        triggerToast('Reportado', 'error');
         refreshData(user);
       }
     } catch (e) {}
   };
 
   const replaceLicense = async (licenseId: string) => {
-    if (!window.confirm("¿Reemplazar automáticamente usando el inventario disponible?")) return;
+    if (!window.confirm('Reemplazar automaticamente usando el inventario disponible?')) return;
     try {
       const res = await fetch('/api/licenses/replace', {
         method: 'POST',
@@ -403,27 +408,27 @@ export default function Dashboard() {
         body: JSON.stringify({ licenseId })
       });
       if (res.ok) {
-        triggerToast("¡Licencia Reemplazada Exitosamente!");
+        triggerToast('Licencia reemplazada exitosamente');
         refreshData();
         refreshStats();
       } else {
         const data = await res.json();
-        triggerToast(data.error || "Error", "error");
+        triggerToast(data.error || 'Error', 'error');
       }
     } catch (e) {
-      triggerToast("Error de conexión", "error");
+      triggerToast('Error de conexion', 'error');
     }
   };
 
-  const requestLicense = async (product: string, count: number) => {
+  const requestLicense = async (product: string, count: number, priority: string, note: string) => {
     try {
       const res = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, product, count })
+        body: JSON.stringify({ userId: user.id, product, count, priority, note })
       });
       if (res.ok) {
-        triggerToast("Solicitud enviada");
+        triggerToast('Solicitud enviada');
         refreshData();
         setShowRequestModal(false);
       }
@@ -553,10 +558,15 @@ export default function Dashboard() {
     .slice(0, 5);
   const myLicenses = db.licenses.filter((license: any) => license.assignedTo === user.id);
   const myPendingRequests = pendingRequests.filter((request: any) => request.userId === user.id);
+  const myRequests = db.requests.filter((request: any) => request.userId === user.id);
   const myRecentLicenses = [...myLicenses]
     .sort((a: any, b: any) => new Date(b.assignedAt || b.createdAt || 0).getTime() - new Date(a.assignedAt || a.createdAt || 0).getTime())
     .slice(0, 4);
   const availableCatalog = db.catalog.filter((item: any) => (availableCountsByProduct[item.name] || 0) > 0);
+  const userOwnedCategories = [...new Set(myLicenses.map((license: any) => {
+    const catalogItem = db.catalog.find((item: any) => item.name === license.product);
+    return catalogItem?.category;
+  }).filter(Boolean))] as string[];
 
   return (
     <div className="h-screen overflow-hidden bg-[#050505] text-white flex font-sans relative">
@@ -824,6 +834,35 @@ export default function Dashboard() {
                     </div>
                   </section>
 
+                  <section className="bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                    <div>
+                      <h4 className="font-black uppercase tracking-widest text-sm text-white/80">Estado de Solicitudes</h4>
+                      <p className="text-white/30 text-xs">Seguimiento de tus pedidos mas recientes</p>
+                    </div>
+                    {myRequests.length === 0 ? (
+                      <p className="text-white/30 font-bold text-sm">Aun no has enviado solicitudes.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[...myRequests]
+                          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                          .slice(0, 4)
+                          .map((request: any) => (
+                            <div key={request.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="font-black text-white">{request.product}</p>
+                                <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border ${request.status === 'resolved' ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' : request.status === 'rejected' ? 'text-red-300 bg-red-500/10 border-red-500/20' : 'text-blue-300 bg-blue-500/10 border-blue-500/20'}`}>
+                                  {request.status}
+                                </span>
+                              </div>
+                              <p className="text-white/45 text-sm mt-2">{request.count}x pedido</p>
+                              {request.note && <p className="text-white/30 text-xs mt-2">{request.note}</p>}
+                              {request.reviewNote && <p className="text-white/25 text-xs mt-2">Respuesta: {request.reviewNote}</p>}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </section>
+
                   <div className="flex items-end justify-between">
                     <div className="space-y-2">
                       <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter">Productos Disponibles</h3>
@@ -840,7 +879,7 @@ export default function Dashboard() {
                           stock={availableCountsByProduct[item.name] || 0} 
                           price={item.price}
                           iconType={item.iconType}
-                          onClick={() => requestLicense(item.name, 1)} 
+                          onClick={() => requestLicense(item.name, 1, 'normal', '')} 
                         />
                       ))}
                     {availableCatalog.length === 0 && (
@@ -865,6 +904,7 @@ export default function Dashboard() {
               addLicensesBulk={addLicensesBulk} 
               availableLicenses={availableLicenses} assignedLicenses={assignedLicenses} reportedLicensesCount={reportedLicensesCount} 
               replaceLicense={replaceLicense}
+              movements={db.movements}
             />
           )}
 
@@ -905,7 +945,7 @@ export default function Dashboard() {
 
 
           {activeTab === 'downloads' && (
-            <DownloadsView downloads={db.downloads} role={role} onRefresh={refreshData} />
+            <DownloadsView downloads={db.downloads} role={role} onRefresh={refreshData} userCategories={userOwnedCategories} />
           )}
         </div>
       </main>
@@ -1035,7 +1075,7 @@ export default function Dashboard() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const target = e.target as any;
-                requestLicense(target.product.value, Number(target.count.value));
+                requestLicense(target.product.value, Number(target.count.value), target.priority.value, target.note.value);
               }} className="space-y-6 text-left">
                 <div className="space-y-1.5 flex flex-col">
                   <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Seleccionar Producto</label>
@@ -1049,9 +1089,23 @@ export default function Dashboard() {
                     ))}
                   </select>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 flex flex-col">
+                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Cantidad Solicitada</label>
+                    <input name="count" type="number" min="1" required defaultValue="1" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm focus:border-blue-500 outline-none transition-colors appearance-none" />
+                  </div>
+                  <div className="space-y-1.5 flex flex-col">
+                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Prioridad</label>
+                    <select name="priority" defaultValue="normal" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm focus:border-blue-500 outline-none appearance-none bg-[#0a0a0a] text-white">
+                      <option value="baja">Baja</option>
+                      <option value="normal">Normal</option>
+                      <option value="alta">Alta</option>
+                    </select>
+                  </div>
+                </div>
                 <div className="space-y-1.5 flex flex-col">
-                  <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Cantidad Solicitada</label>
-                  <input name="count" type="number" min="1" required defaultValue="1" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm focus:border-blue-500 outline-none transition-colors appearance-none" />
+                  <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Nota o contexto</label>
+                  <textarea name="note" rows={3} placeholder="Ej: La necesito para un cliente o renovacion urgente" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm focus:border-blue-500 outline-none transition-colors resize-none" />
                 </div>
                 <div className="flex gap-4 pt-4">
                   <button type="button" onClick={() => setShowRequestModal(false)} className="flex-1 py-4 font-bold text-white/40 hover:text-white transition-colors">Cancelar</button>

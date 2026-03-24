@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSettings } from '@/lib/db';
 import { withAdmin } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { WEBHOOK_SECRET } from '../webhook/route';
+import { getWebhookSecret } from '../webhook/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         body: JSON.stringify({ 
           url: webhookUrl,
           allowed_updates: ['message'],
-          secret_token: WEBHOOK_SECRET,
+          secret_token: getWebhookSecret(),
         }),
       });
 

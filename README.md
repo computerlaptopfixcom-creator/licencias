@@ -53,6 +53,7 @@ Panel de administración profesional diseñado para la gestión integral de inve
 Este proyecto emplea tecnología **SQLite embebida** (`better-sqlite3`), garantizando máxima velocidad, integridad referencial y cero fricción en configuración de servidores externos de bases de datos.
 
 ### Opción 1: EasyPanel (Recomendado)
+*✅ Despliegue 100% verificado: Compatible con la generación estática (SSG) de Next.js sin errores de variables de entorno.*
 1. Crea un nuevo **Service** en EasyPanel.
 2. Conecta tu repositorio de GitHub.
 3. EasyPanel detectará el `Dockerfile` automáticamente.

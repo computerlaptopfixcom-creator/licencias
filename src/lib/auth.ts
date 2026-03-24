@@ -17,7 +17,6 @@ function getJwtSecret(): string {
     .digest('hex');
 }
 
-const JWT_SECRET = getJwtSecret();
 const TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
 interface TokenPayload {
@@ -39,8 +38,9 @@ export function signToken(payload: { userId: string; role: string; name: string;
     exp: now + TOKEN_EXPIRY
   })).toString('base64url');
   
+  const secret = getJwtSecret();
   const signature = crypto
-    .createHmac('sha256', JWT_SECRET)
+    .createHmac('sha256', secret)
     .update(`${header}.${body}`)
     .digest('base64url');
   
@@ -52,8 +52,9 @@ export function verifyToken(token: string): TokenPayload | null {
     const [header, body, signature] = token.split('.');
     if (!header || !body || !signature) return null;
     
+    const secret = getJwtSecret();
     const expectedSig = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHmac('sha256', secret)
       .update(`${header}.${body}`)
       .digest('base64url');
     

@@ -6,7 +6,7 @@ import crypto from 'crypto';
 const DB_PATH = path.join(process.cwd(), 'src/data/database.sqlite');
 const LEGACY_JSON_PATH = path.join(process.cwd(), 'src/data/database.json');
 
-let db: Database.Database;
+let db!: Database.Database;
 
 const DEFAULT_CATALOG: any[] = [
   { id: 'cat_1', category: 'Windows Keys', name: 'Windows Pro 10/11 Phone', price: 3.00, minStock: 5 },
@@ -86,6 +86,9 @@ export function initDb() {
       userName TEXT NOT NULL,
       product TEXT NOT NULL,
       count INTEGER NOT NULL,
+      priority TEXT NOT NULL DEFAULT 'normal',
+      note TEXT,
+      reviewNote TEXT,
       status TEXT NOT NULL DEFAULT 'pending',
       createdAt TEXT NOT NULL,
       resolvedAt TEXT,
@@ -108,6 +111,18 @@ export function initDb() {
       featured INTEGER NOT NULL DEFAULT 0,
       createdAt TEXT NOT NULL,
       updatedAt TEXT
+    );
+    CREATE TABLE IF NOT EXISTS movements (
+      id TEXT PRIMARY KEY,
+      licenseId TEXT,
+      product TEXT NOT NULL,
+      actorId TEXT,
+      actorName TEXT,
+      targetUserId TEXT,
+      targetUserName TEXT,
+      type TEXT NOT NULL,
+      details TEXT,
+      createdAt TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -151,10 +166,11 @@ export function initDb() {
 function migrateData(data: any) {
   const insertUser = db.prepare(`INSERT OR REPLACE INTO users (id, name, email, password, role, mustChangeCredentials, telegramUserId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
   const insertLic = db.prepare(`INSERT OR REPLACE INTO licenses (id, product, key, status, assignedTo, assignedAt, assignedBy, claimed, claimedAt, reportedFailed, reportedAt, batchNote, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-  const insertReq = db.prepare(`INSERT OR REPLACE INTO requests (id, userId, userName, product, count, status, createdAt, resolvedAt, rejectedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const insertReq = db.prepare(`INSERT OR REPLACE INTO requests (id, userId, userName, product, count, priority, note, reviewNote, status, createdAt, resolvedAt, rejectedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const insertNotif = db.prepare(`INSERT OR REPLACE INTO notifications (id, userId, message, type, read, createdAt) VALUES (?, ?, ?, ?, ?, ?)`);
   const insertCat = db.prepare(`INSERT OR REPLACE INTO catalog (id, category, name, price, iconType, minStock) VALUES (?, ?, ?, ?, ?, ?)`);
   const insertDown = db.prepare(`INSERT OR REPLACE INTO downloads (id, title, link, category, description, featured, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+  const insertMove = db.prepare(`INSERT OR REPLACE INTO movements (id, licenseId, product, actorId, actorName, targetUserId, targetUserName, type, details, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
   db.transaction(() => {
     for (const u of (data.users || [])) {
@@ -164,7 +180,7 @@ function migrateData(data: any) {
       insertLic.run(l.id, l.product, l.key, l.status, l.assignedTo || null, l.assignedAt || null, l.assignedBy || null, l.claimed ? 1 : 0, l.claimedAt || null, l.reportedFailed ? 1 : 0, l.reportedAt || null, l.batchNote || null, l.createdAt || null);
     }
     for (const r of (data.requests || [])) {
-      insertReq.run(r.id, r.userId, r.userName, r.product, r.count, r.status, r.createdAt || new Date().toISOString(), r.resolvedAt || null, r.rejectedAt || null);
+      insertReq.run(r.id, r.userId, r.userName, r.product, r.count, r.priority || 'normal', r.note || null, r.reviewNote || null, r.status, r.createdAt || new Date().toISOString(), r.resolvedAt || null, r.rejectedAt || null);
     }
     for (const n of (data.notifications || [])) {
       insertNotif.run(n.id, n.userId, n.message, n.type || 'info', n.read ? 1 : 0, n.createdAt || new Date().toISOString());
@@ -174,6 +190,9 @@ function migrateData(data: any) {
     }
     for (const d of (data.downloads || [])) {
       insertDown.run(d.id, d.title, d.link, d.category, d.description || null, d.featured ? 1 : 0, d.createdAt || new Date().toISOString(), d.updatedAt || null);
+    }
+    for (const m of (data.movements || [])) {
+      insertMove.run(m.id, m.licenseId || null, m.product, m.actorId || null, m.actorName || null, m.targetUserId || null, m.targetUserName || null, m.type, m.details || null, m.createdAt || new Date().toISOString());
     }
     if (data.settings) {
       const s = data.settings;
@@ -188,6 +207,32 @@ initDb();
 function mapUser(u: any) { return { ...u, mustChangeCredentials: !!u.mustChangeCredentials }; }
 function mapLicense(l: any) { return { ...l, claimed: !!l.claimed, reportedFailed: !!l.reportedFailed }; }
 function mapNotif(n: any) { return { ...n, read: !!n.read }; }
+function mapMovement(m: any) { return m; }
+
+function logMovement(entry: {
+  licenseId?: string | null;
+  product: string;
+  actorId?: string | null;
+  actorName?: string | null;
+  targetUserId?: string | null;
+  targetUserName?: string | null;
+  type: string;
+  details?: string | null;
+}) {
+  db.prepare(`INSERT INTO movements (id, licenseId, product, actorId, actorName, targetUserId, targetUserName, type, details, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(
+      `mv_${crypto.randomUUID().slice(0, 8)}`,
+      entry.licenseId || null,
+      entry.product,
+      entry.actorId || null,
+      entry.actorName || null,
+      entry.targetUserId || null,
+      entry.targetUserName || null,
+      entry.type,
+      entry.details || null,
+      new Date().toISOString()
+    );
+}
 
 export function getDb() {
   const users = db.prepare('SELECT * FROM users').all().map(mapUser);
@@ -196,6 +241,7 @@ export function getDb() {
   const notifications = db.prepare('SELECT * FROM notifications').all().map(mapNotif);
   const catalog = db.prepare('SELECT * FROM catalog').all();
   const downloads = db.prepare('SELECT * FROM downloads').all();
+  const movements = db.prepare('SELECT * FROM movements ORDER BY createdAt DESC').all();
   const settingsRow = db.prepare('SELECT * FROM settings WHERE id=1').get();
   
   return {
@@ -205,6 +251,7 @@ export function getDb() {
     notifications,
     catalog,
     downloads,
+    movements,
     settings: settingsRow
   };
 }
@@ -339,7 +386,15 @@ export function getInventoryStats() {
   const licAssigned = db.prepare(`SELECT COUNT(*) as c FROM licenses WHERE status='assigned'`).get() as any;
   const licFailed = db.prepare(`SELECT COUNT(*) as c FROM licenses WHERE reportedFailed=1`).get() as any;
 
-  const lowStock = db.prepare(`SELECT product, COUNT(*) as count FROM licenses WHERE status='available' GROUP BY product HAVING count < 5`).all();
+  const catalogItems = db.prepare('SELECT name, minStock FROM catalog').all() as Array<{ name: string, minStock: number }>;
+  const availableByProduct = db.prepare(`SELECT product, COUNT(*) as count FROM licenses WHERE status='available' GROUP BY product`).all() as Array<{ product: string, count: number }>;
+  const lowStock = catalogItems
+    .map((item) => ({
+      product: item.name,
+      count: availableByProduct.find((row) => row.product === item.name)?.count || 0,
+      minStock: item.minStock || 0
+    }))
+    .filter((item) => item.count <= item.minStock);
 
   return {
     total: licTotal.c,
@@ -384,7 +439,14 @@ export function addLicensesBulk(product: string, keys: string[], batchNote: stri
         dupes++;
         continue;
       }
-      insert.run(`l_${crypto.randomUUID().slice(0, 8)}`, product, key, batchNote, timestamp);
+      const licenseId = `l_${crypto.randomUUID().slice(0, 8)}`;
+      insert.run(licenseId, product, key, batchNote, timestamp);
+      logMovement({
+        licenseId,
+        product,
+        type: 'stock_added',
+        details: batchNote ? `Lote: ${batchNote}` : 'Carga masiva'
+      });
       added++;
     }
   })();
@@ -403,10 +465,20 @@ export function assignLicensesBatch(userId: string, product: string, count: numb
   
   const timestamp = new Date().toISOString();
   const updateStmt = db.prepare(`UPDATE licenses SET status='assigned', assignedTo=?, assignedAt=? WHERE id=?`);
+  const user = db.prepare('SELECT name FROM users WHERE id=?').get(userId) as any;
+  const userName = user ? user.name : 'Usuario';
   
   db.transaction(() => {
     for (const row of available) {
       updateStmt.run(userId, timestamp, row.id);
+      logMovement({
+        licenseId: row.id,
+        product,
+        targetUserId: userId,
+        targetUserName: userName,
+        type: 'assigned',
+        details: `Asignada en lote de ${available.length}`
+      });
     }
     createNotification({}, userId, `📦 <b>LICENCIAS ASIGNADAS</b>: Te han asignado <b>${available.length} licencia(s)</b> de <b>${product}</b>. ✅`);
   })();
@@ -431,6 +503,16 @@ export function revealLicense(userId: string, licenseId: string) {
   
   const user = db.prepare('SELECT name FROM users WHERE id=?').get(userId) as any;
   const userName = user ? user.name : 'Un usuario';
+  logMovement({
+    licenseId,
+    product: license.product,
+    actorId: userId,
+    actorName: userName,
+    targetUserId: userId,
+    targetUserName: userName,
+    type: 'revealed',
+    details: 'Llave revelada por el usuario'
+  });
   createNotification({}, 'admin', `🔑 <b>LLAVE REVELADA</b>: ${userName} ha revelado una llave de <b>${license.product}</b>. ✨`);
   
   return { success: true, license: mapLicense({ ...license, claimed: true }) };
@@ -444,6 +526,16 @@ export function reportFailedLicense(userId: string, licenseId: string) {
   
   const user = db.prepare('SELECT name FROM users WHERE id=?').get(userId) as any;
   const userName = user ? user.name : 'Un usuario';
+  logMovement({
+    licenseId,
+    product: license.product,
+    actorId: userId,
+    actorName: userName,
+    targetUserId: userId,
+    targetUserName: userName,
+    type: 'failed_reported',
+    details: 'Usuario reporto una falla'
+  });
   createNotification({}, 'admin', `🚨 <b>REPORTE DE FALLO</b>: ${userName} indicó que la llave de <b>${license.product}</b> (<code>${license.key}</code>) no funciona. 🛠️`);
   
   return { success: true };
@@ -453,37 +545,81 @@ export function getRequests() {
   return db.prepare('SELECT * FROM requests').all();
 }
 
-export function createRequest(userId: string, product: string, count: number = 1) {
+export function getMovements(limit: number = 100, userId?: string) {
+  if (userId) {
+    return db.prepare(`SELECT * FROM movements WHERE targetUserId = ? OR actorId = ? ORDER BY createdAt DESC LIMIT ?`).all(userId, userId, limit).map(mapMovement);
+  }
+  return db.prepare(`SELECT * FROM movements ORDER BY createdAt DESC LIMIT ?`).all(limit).map(mapMovement);
+}
+
+export function previewBulkLicenses(keys: string[]) {
+  const normalized = new Set<string>();
+  const duplicatesInPayload: string[] = [];
+  const existingInSystem: string[] = [];
+  const cleanKeys: string[] = [];
+  const existCheck = db.prepare(`SELECT 1 FROM licenses WHERE UPPER(REPLACE(key, ' ', '')) = ?`);
+
+  for (const originalKey of keys) {
+    const trimmed = originalKey.trim();
+    if (!trimmed) continue;
+    const normKey = trimmed.replace(/\s+/g, '').toUpperCase();
+    if (normalized.has(normKey)) {
+      duplicatesInPayload.push(trimmed);
+      continue;
+    }
+    normalized.add(normKey);
+    if (existCheck.get(normKey)) {
+      existingInSystem.push(trimmed);
+      continue;
+    }
+    cleanKeys.push(trimmed);
+  }
+
+  return {
+    total: keys.filter((key) => key.trim().length > 0).length,
+    valid: cleanKeys.length,
+    duplicatesInPayload,
+    existingInSystem
+  };
+}
+
+export function createRequest(userId: string, product: string, count: number = 1, priority: string = 'normal', note: string = '') {
   const req = {
-    id: `req_${Math.random().toString(36).substr(2, 9)}`,
+    id: `req_${crypto.randomUUID().slice(0, 8)}`,
     userId,
     product,
     count,
+    priority,
+    note: note.trim() || null,
     status: 'pending',
     createdAt: new Date().toISOString()
   };
-  
+
   const user = db.prepare('SELECT name FROM users WHERE id=?').get(userId) as any;
   const userName = user ? user.name : 'Un usuario';
-  
-  db.prepare(`INSERT INTO requests (id, userId, userName, product, count, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-    .run(req.id, req.userId, userName, req.product, req.count, req.status, req.createdAt);
-    
+
+  db.prepare(`INSERT INTO requests (id, userId, userName, product, count, priority, note, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(req.id, req.userId, userName, req.product, req.count, req.priority, req.note, req.status, req.createdAt);
+
   createNotification({}, 'admin', `🆕 <b>NUEVA SOLICITUD</b>: ${userName} pide <b>${count}x ${product}</b>. ⚡`);
-  return { success: true, request: req };
+  return { success: true, request: { ...req, userName } };
 }
 
-export function resolveRequest(reqId: string) {
-  const res = db.prepare(`UPDATE requests SET status='resolved', resolvedAt=? WHERE id=?`).run(new Date().toISOString(), reqId);
-  return res.changes > 0 ? { success: true } : { success: false, error: 'Solicitud no encontrada' };
-}
-
-export function rejectRequest(reqId: string) {
+export function resolveRequest(reqId: string, reviewNote: string = '') {
   const req = db.prepare(`SELECT * FROM requests WHERE id=?`).get(reqId) as any;
   if (!req) return { success: false, error: 'Solicitud no encontrada' };
-  
-  db.prepare(`UPDATE requests SET status='rejected', rejectedAt=? WHERE id=?`).run(new Date().toISOString(), reqId);
-  createNotification({}, req.userId, `❌ <b>SOLICITUD RECHAZADA</b>: Tu pedido de <b>${req.count}x ${req.product}</b> no ha podido ser procesado. Contacta a soporte para más detalles. 🛠️`);
+
+  db.prepare(`UPDATE requests SET status='resolved', reviewNote=?, resolvedAt=? WHERE id=?`).run(reviewNote.trim() || null, new Date().toISOString(), reqId);
+  createNotification({}, req.userId, `✅ <b>SOLICITUD APROBADA</b>: Tu pedido de <b>${req.count}x ${req.product}</b> fue procesado correctamente.`);
+  return { success: true };
+}
+
+export function rejectRequest(reqId: string, reviewNote: string = '') {
+  const req = db.prepare(`SELECT * FROM requests WHERE id=?`).get(reqId) as any;
+  if (!req) return { success: false, error: 'Solicitud no encontrada' };
+
+  db.prepare(`UPDATE requests SET status='rejected', reviewNote=?, rejectedAt=? WHERE id=?`).run(reviewNote.trim() || null, new Date().toISOString(), reqId);
+  createNotification({}, req.userId, `❌ <b>SOLICITUD RECHAZADA</b>: Tu pedido de <b>${req.count}x ${req.product}</b> no ha podido ser procesado.${reviewNote ? ` Motivo: ${reviewNote}` : ''}`);
   return { success: true };
 }
 
@@ -604,6 +740,24 @@ export function replaceFailedLicense(licenseId: string) {
 
     db.prepare(`UPDATE licenses SET status='assigned', assignedTo=?, assignedAt=?, claimed=0, reportedFailed=0 WHERE id=?`)
       .run(badLic.assignedTo, new Date().toISOString(), newLic.id);
+
+    const targetUser = db.prepare('SELECT name FROM users WHERE id=?').get(badLic.assignedTo) as any;
+    logMovement({
+      licenseId,
+      product: badLic.product,
+      targetUserId: badLic.assignedTo,
+      targetUserName: targetUser?.name || 'Usuario',
+      type: 'replaced_old',
+      details: `Reemplazada por ${newLic.id}`
+    });
+    logMovement({
+      licenseId: newLic.id,
+      product: newLic.product,
+      targetUserId: badLic.assignedTo,
+      targetUserName: targetUser?.name || 'Usuario',
+      type: 'replacement_assigned',
+      details: `Reemplazo automatico de ${licenseId}`
+    });
       
     createNotification({}, badLic.assignedTo, `Tu licencia reportada de ${badLic.product} ha sido reemplazada automáticamente. Revisa 'Mis Llaves'.`);
     success = true;
@@ -622,3 +776,33 @@ export function replaceFailedLicense(licenseId: string) {
   if (!downloadColumns.some((column) => column.name === 'featured')) {
     db.exec(`ALTER TABLE downloads ADD COLUMN featured INTEGER NOT NULL DEFAULT 0`);
   }
+  const requestColumns = db.prepare(`PRAGMA table_info(requests)`).all() as Array<{ name: string }>;
+  if (!requestColumns.some((column) => column.name === 'priority')) {
+    db.exec(`ALTER TABLE requests ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'`);
+  }
+  if (!requestColumns.some((column) => column.name === 'note')) {
+    db.exec(`ALTER TABLE requests ADD COLUMN note TEXT`);
+  }
+  if (!requestColumns.some((column) => column.name === 'reviewNote')) {
+    db.exec(`ALTER TABLE requests ADD COLUMN reviewNote TEXT`);
+  }
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS movements (
+      id TEXT PRIMARY KEY,
+      licenseId TEXT,
+      product TEXT NOT NULL,
+      actorId TEXT,
+      actorName TEXT,
+      targetUserId TEXT,
+      targetUserName TEXT,
+      type TEXT NOT NULL,
+      details TEXT,
+      createdAt TEXT NOT NULL
+    );
+  `);
+
+
+
+
+
+

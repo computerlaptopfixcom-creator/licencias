@@ -1,19 +1,20 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { rejectRequest } from '@/lib/db';
 import { withAdmin } from '@/lib/auth';
 
 export async function POST(request: Request) {
   return withAdmin(async (_, req) => {
     try {
-      const { reqId } = await req.json();
+      const { reqId, reviewNote } = await req.json();
       if (!reqId) {
         return NextResponse.json({ error: 'Faltan datos' }, { status: 400 });
       }
-      const result = rejectRequest(reqId);
+      const result = rejectRequest(reqId, reviewNote || '');
       if (!result.success) return NextResponse.json({ error: result.error }, { status: 404 });
       return NextResponse.json(result);
-    } catch (e) {
+    } catch {
       return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
     }
   }, request);
 }
+
