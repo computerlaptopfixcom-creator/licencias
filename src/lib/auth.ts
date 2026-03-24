@@ -3,7 +3,21 @@ import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
 // Generate a stable secret from the process — in production use env var
-const JWT_SECRET = process.env.JWT_SECRET || crypto.createHash('sha256').update('micro-license-system-secret-key-2026').digest('hex');
+function getJwtSecret(): string {
+  const configuredSecret = process.env.JWT_SECRET?.trim();
+  if (configuredSecret) return configuredSecret;
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET must be configured in production');
+  }
+
+  return crypto
+    .createHash('sha256')
+    .update(`dev-secret:${process.cwd()}`)
+    .digest('hex');
+}
+
+const JWT_SECRET = getJwtSecret();
 const TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 
 interface TokenPayload {
@@ -92,7 +106,7 @@ export async function withAdmin(handler: (user: TokenPayload, request: Request) 
 export function setAuthCookie(response: NextResponse, token: string): NextResponse {
   response.cookies.set('auth_token', token, {
     httpOnly: true,
-    secure: false, // EasyPanel uses HTTP behind reverse proxy
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: TOKEN_EXPIRY / 1000 // seconds

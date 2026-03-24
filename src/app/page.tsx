@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  PlusCircle,
+  AlertTriangle,
+  ArrowRight,
+  Clock3,
+  ShieldAlert,
   X,
   CheckCircle2
 } from 'lucide-react';
@@ -26,12 +29,22 @@ import { SetupAccountView } from '@/components/SetupAccountView';
 import { FirstRunSetup } from '@/components/FirstRunSetup';
 import { ProductCard } from '@/components/ui/ProductCard';
 
+const INITIAL_DB = { users: [], licenses: [], requests: [], catalog: [], downloads: [] };
+const INITIAL_SETTINGS = {
+  telegramBotToken: '',
+  telegramChatId: '',
+  brandName: 'Micro Licenses',
+  appDescription: 'Gestiona y adquiere tus llaves de software premium',
+  logoType: 'ShieldCheck',
+  primaryColor: '#3b82f6',
+  telegramWebhookUrl: ''
+};
+
 export default function Dashboard() {
-  const [db, setDb] = useState<{ users: any[], licenses: any[], requests: any[], catalog: any[], downloads: any[] }>({ users: [], licenses: [], requests: [], catalog: [], downloads: [] });
+  const [db, setDb] = useState<{ users: any[], licenses: any[], requests: any[], catalog: any[], downloads: any[] }>(INITIAL_DB);
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -46,76 +59,44 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
 
-  const [settings, setSettings] = useState({ 
-    telegramBotToken: '', 
-    telegramChatId: '',
-    brandName: 'Micro Licenses',
-    appDescription: 'Gestiona y adquiere tus llaves de software premium',
-    logoType: 'ShieldCheck',
-    primaryColor: '#3b82f6',
-    telegramWebhookUrl: ''
-  });
+  const [settings, setSettings] = useState(INITIAL_SETTINGS);
 
   // Derive PRODUCT_CATALOG and PRODUCT_PRICES from db.catalog
   const PRODUCT_CATALOG: Record<string, string[]> = {};
-  const PRODUCT_PRICES: Record<string, number> = {};
   db.catalog.forEach((item: any) => {
     if (!PRODUCT_CATALOG[item.category]) PRODUCT_CATALOG[item.category] = [];
     PRODUCT_CATALOG[item.category].push(item.name);
-    PRODUCT_PRICES[item.name] = item.price;
   });
 
-  useEffect(() => {
-    // Restore session from localStorage
-    const savedUser = localStorage.getItem('session_user');
-    let currentUser = null;
-    if (savedUser) {
-      try {
-        currentUser = JSON.parse(savedUser);
-        setUser(currentUser);
-      } catch(e) { localStorage.removeItem('session_user'); }
+  async function refreshStats() {
+    if (!user || user.role !== 'admin') {
+      setStats(null);
+      return;
     }
-
-    // Check if system needs first-run setup
-    fetch('/api/auth/init').then(r => r.json()).then(d => {
-      setNeedsSetup(d.needsSetup);
-    }).catch(() => setNeedsSetup(false));
-
-    refreshData(currentUser);
-    refreshStats();
-
-    const interval = setInterval(() => {
-      refreshData(currentUser);
-      refreshStats();
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const refreshStats = async () => {
     try {
       const res = await fetch('/api/stats');
       if (!res.ok) return;
       const data = await res.json();
       setStats(data);
     } catch (e) {}
-  };
+  }
 
-  const refreshData = async (currentUser: any = user) => {
+  async function refreshData(currentUser: any = user) {
     try {
-      const endpoints = [
-        fetch('/api/users'),
+      const isAdmin = currentUser?.role === 'admin';
+      const requestsPromise = [
+        isAdmin ? fetch('/api/users') : Promise.resolve(null),
         fetch('/api/licenses'),
         fetch('/api/requests'),
         fetch('/api/catalog'),
         fetch('/api/downloads'),
-        currentUser ? fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.role === 'admin' ? 'admin' : currentUser.id })}) : Promise.resolve(null),
+        currentUser ? fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: isAdmin ? 'admin' : currentUser.id })}) : Promise.resolve(null),
         fetch('/api/settings')
       ];
       
-      const [resUsers, resLicenses, resRequests, resCatalog, resDownloads, resNotifs, resSettings] = await Promise.all(endpoints);
+      const [resUsers, resLicenses, resRequests, resCatalog, resDownloads, resNotifs, resSettings] = await Promise.all(requestsPromise);
       
-      if (resUsers?.status === 401 || resLicenses?.status === 401) {
+      if (resLicenses?.status === 401 || resRequests?.status === 401 || resSettings?.status === 401) {
         if (currentUser) {
           handleLogout();
         }
@@ -130,7 +111,7 @@ export default function Dashboard() {
       const downloads = resDownloads && resDownloads.ok ? await resDownloads.clone().json().catch(() => []) : [];
       
       setDb({ 
-        users: Array.isArray(users) ? users : [], 
+        users: isAdmin && Array.isArray(users) ? users : [], 
         licenses: Array.isArray(licenses) ? licenses : [], 
         requests: Array.isArray(requests) ? requests : [], 
         catalog: Array.isArray(catalog) ? catalog : [],
@@ -162,7 +143,7 @@ export default function Dashboard() {
     } catch (e) {
       console.error("Fetch error", e);
     }
-  };
+  }
 
   const triggerToast = (message: string, type: 'success' | 'error' = 'success') => {
     const cleanMessage = message.replace(/<[^>]*>?/gm, '');
@@ -197,6 +178,9 @@ export default function Dashboard() {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (e) {}
     setUser(null);
+    setDb(INITIAL_DB);
+    setNotifications([]);
+    setStats(null);
     localStorage.removeItem('session_user');
     setActiveTab('dashboard');
   };
@@ -234,12 +218,12 @@ export default function Dashboard() {
     } catch (e) {}
   };
 
-  const changePassword = async (newPassword: string) => {
+  const changePassword = async (currentPassword: string, newPassword: string) => {
     try {
       const res = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, newPassword })
+        body: JSON.stringify({ currentPassword, newPassword })
       });
       if (res.ok) triggerToast("Contraseña actualizada");
       else {
@@ -251,7 +235,7 @@ export default function Dashboard() {
 
   const markAllRead = async () => {
     try {
-      const res = await fetch('/api/notifications/read-all', {
+      const res = await fetch('/api/notifications/mark-read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.role === 'admin' ? 'admin' : user.id })
@@ -260,7 +244,7 @@ export default function Dashboard() {
     } catch (e) {}
   };
 
-  const createUser = async (name: string, password?: string) => {
+  const createUser = async (name: string, password: string) => {
     try {
       const res = await fetch('/api/users', {
         method: 'POST',
@@ -333,17 +317,30 @@ export default function Dashboard() {
 
   const approveRequest = async (id: string, userId: string, product: string, count: number) => {
     try {
-      const res = await fetch('/api/requests/approve', {
+      const assignRes = await fetch('/api/users/assign-batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId: id, userId, product, count })
+        body: JSON.stringify({ userId, product, count })
       });
-      if (res.ok) {
+
+      if (!assignRes.ok) {
+        const data = await assignRes.json();
+        triggerToast(data.error || "No se pudo asignar el stock", "error");
+        return;
+      }
+
+      const resolveRes = await fetch('/api/requests/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reqId: id })
+      });
+
+      if (resolveRes.ok) {
         triggerToast("Solicitud aprobada");
         refreshData();
         refreshStats();
       } else {
-        const data = await res.json();
+        const data = await resolveRes.json();
         triggerToast(data.error, "error");
       }
     } catch (e) { triggerToast("Error de conexión", "error"); }
@@ -440,6 +437,7 @@ export default function Dashboard() {
       name: target.name.value,
       category: target.category.value,
       price: Number(target.price.value),
+      minStock: Number(target.minStock.value),
       iconType: target.iconType.value,
       ...(showCatalogModal.item && { id: showCatalogModal.item.id })
     };
@@ -456,6 +454,45 @@ export default function Dashboard() {
       }
     } catch (e) {}
   };
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('session_user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('session_user');
+      }
+    }
+
+    fetch('/api/auth/init')
+      .then((r) => r.json())
+      .then((d) => {
+        setNeedsSetup(d.needsSetup);
+      })
+      .catch(() => setNeedsSetup(false));
+  }, []);
+
+  useEffect(() => {
+    if (needsSetup === null) return;
+
+    const runRefresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      refreshData(user);
+      if (user?.role === 'admin') {
+        refreshStats();
+      }
+    };
+
+    runRefresh();
+    const interval = setInterval(runRefresh, user?.role === 'admin' ? 15000 : 30000);
+    document.addEventListener('visibilitychange', runRefresh);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', runRefresh);
+    };
+  }, [needsSetup, user]);
 
   if (needsSetup === null) {
     return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/20 border-t-blue-500 rounded-full animate-spin" /></div>;
@@ -477,6 +514,49 @@ export default function Dashboard() {
   const availableLicenses = db.licenses.filter(l => l.status === 'available').length;
   const assignedLicenses = db.licenses.filter(l => l.status === 'assigned' && !l.reportedFailed).length;
   const reportedLicensesCount = db.licenses.filter(l => l.reportedFailed).length;
+  const pendingRequests = db.requests.filter((request: any) => request.status === 'pending');
+  const recentRequests = [...db.requests]
+    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
+  const recentReveals = [...db.licenses]
+    .filter((license: any) => license.claimed)
+    .sort((a: any, b: any) => new Date(b.claimedAt || b.createdAt || 0).getTime() - new Date(a.claimedAt || a.createdAt || 0).getTime())
+    .slice(0, 5);
+  const recentFailures = [...db.licenses]
+    .filter((license: any) => license.reportedFailed)
+    .sort((a: any, b: any) => new Date(b.reportedAt || 0).getTime() - new Date(a.reportedAt || 0).getTime())
+    .slice(0, 5);
+  const usersWithoutStock = db.users.filter((dbUser: any) => dbUser.role !== 'admin' && !db.licenses.some((license: any) => license.assignedTo === dbUser.id && !license.reportedFailed));
+  const availableCountsByProduct = db.licenses.reduce((acc: Record<string, number>, license: any) => {
+    if (license.status === 'available') {
+      acc[license.product] = (acc[license.product] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const replenishmentProducts = [...db.catalog]
+    .map((item: any) => {
+      const minStock = Number(item.minStock ?? 5);
+      const availableCount = availableCountsByProduct[item.name] || 0;
+      return {
+        ...item,
+        minStock,
+        availableCount,
+        deficit: Math.max(minStock - availableCount, 0),
+        recommendedLoad: Math.max(minStock * 2 - availableCount, 0)
+      };
+    })
+    .filter((item: any) => item.availableCount <= item.minStock)
+    .sort((a: any, b: any) => {
+      if (b.deficit !== a.deficit) return b.deficit - a.deficit;
+      return a.availableCount - b.availableCount;
+    })
+    .slice(0, 5);
+  const myLicenses = db.licenses.filter((license: any) => license.assignedTo === user.id);
+  const myPendingRequests = pendingRequests.filter((request: any) => request.userId === user.id);
+  const myRecentLicenses = [...myLicenses]
+    .sort((a: any, b: any) => new Date(b.assignedAt || b.createdAt || 0).getTime() - new Date(a.assignedAt || a.createdAt || 0).getTime())
+    .slice(0, 4);
+  const availableCatalog = db.catalog.filter((item: any) => (availableCountsByProduct[item.name] || 0) > 0);
 
   return (
     <div className="h-screen overflow-hidden bg-[#050505] text-white flex font-sans relative">
@@ -509,6 +589,9 @@ export default function Dashboard() {
 
       <main className="flex-1 flex flex-col h-screen relative overflow-hidden">
         <MobileNav 
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          role={role}
           settings={settings} 
           notifications={notifications} 
           showNotifications={showNotifications} 
@@ -540,11 +623,207 @@ export default function Dashboard() {
               <StatCards role={role} stats={stats} user={user} db={db} />
 
               {role === 'admin' && (
-                <RequestsView requests={db.requests} role={role} onApprove={approveRequest} onReject={rejectRequest} />
+                <>
+                  <section className="space-y-6">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter">Atencion Inmediata</h3>
+                        <p className="text-white/30 text-xs sm:text-sm font-bold uppercase tracking-widest">Lo que requiere accion ahora mismo</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                      <div className="bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                        <div className="flex items-center gap-3 text-amber-400">
+                          <Clock3 className="w-5 h-5" />
+                          <h4 className="font-black uppercase tracking-widest text-sm">Solicitudes Pendientes</h4>
+                        </div>
+                        {pendingRequests.length === 0 ? (
+                          <p className="text-white/30 font-bold text-sm">No hay solicitudes pendientes.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {pendingRequests.slice(0, 3).map((request: any) => (
+                              <button
+                                key={request.id}
+                                onClick={() => setActiveTab('dashboard')}
+                                className="w-full text-left p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-emerald-500/30 transition-all"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div>
+                                    <p className="font-black text-white">{request.userName}</p>
+                                    <p className="text-white/40 text-xs">{request.count}x {request.product}</p>
+                                  </div>
+                                  <ArrowRight className="w-4 h-4 text-white/30" />
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                        <div className="flex items-center gap-3 text-red-400">
+                          <ShieldAlert className="w-5 h-5" />
+                          <h4 className="font-black uppercase tracking-widest text-sm">Licencias Fallidas</h4>
+                        </div>
+                        {recentFailures.length === 0 ? (
+                          <p className="text-white/30 font-bold text-sm">No hay fallas por atender.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {recentFailures.slice(0, 3).map((license: any) => (
+                              <div key={license.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                                <p className="font-black text-white">{license.product}</p>
+                                <p className="text-white/40 text-xs">{license.reportedAt ? new Date(license.reportedAt).toLocaleString() : 'Sin fecha'}</p>
+                              </div>
+                            ))}
+                            <button onClick={() => setActiveTab('inventory')} className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all">
+                              Revisar inventario reportado
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                        <div className="flex items-center gap-3 text-blue-400">
+                          <AlertTriangle className="w-5 h-5" />
+                          <h4 className="font-black uppercase tracking-widest text-sm">Reposicion</h4>
+                        </div>
+                        {replenishmentProducts.length === 0 ? (
+                          <p className="text-white/30 font-bold text-sm">No hay productos por debajo de su minimo.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {replenishmentProducts.map((item: any) => (
+                              <div key={item.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="font-black text-white">{item.name}</p>
+                                  <p className="text-white/40 text-xs">Disponible: {item.availableCount} / Minimo: {item.minStock}</p>
+                                  <p className="text-white/20 text-[11px] uppercase tracking-widest mt-1">Sugerido cargar: {item.recommendedLoad}</p>
+                                </div>
+                                <button onClick={() => { setInventoryFilter(item.name); setActiveTab('inventory'); setBulkOpen(true); }} className="px-3 py-2 rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/20 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                                  Cargar
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div className="bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <h4 className="font-black uppercase tracking-widest text-sm text-white/80">Actividad Reciente</h4>
+                          <p className="text-white/30 text-xs">Ultimas revelaciones y solicitudes</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {recentReveals.slice(0, 3).map((license: any) => {
+                          const owner = db.users.find((dbUser: any) => dbUser.id === license.assignedTo);
+                          return (
+                            <div key={license.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                              <p className="font-black text-white">{owner?.name || 'Usuario'} revelo {license.product}</p>
+                              <p className="text-white/40 text-xs">{license.claimedAt ? new Date(license.claimedAt).toLocaleString() : 'Sin fecha'}</p>
+                            </div>
+                          );
+                        })}
+                        {recentRequests.slice(0, 2).map((request: any) => (
+                          <div key={request.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                            <p className="font-black text-white">{request.userName} solicito {request.count}x {request.product}</p>
+                            <p className="text-white/40 text-xs">{new Date(request.createdAt).toLocaleString()}</p>
+                          </div>
+                        ))}
+                        {recentReveals.length === 0 && recentRequests.length === 0 && (
+                          <p className="text-white/30 font-bold text-sm">Aun no hay actividad reciente para mostrar.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                      <div>
+                        <h4 className="font-black uppercase tracking-widest text-sm text-white/80">Usuarios a Reabastecer</h4>
+                        <p className="text-white/30 text-xs">Cuentas sin licencias activas</p>
+                      </div>
+                      {usersWithoutStock.length === 0 ? (
+                        <p className="text-white/30 font-bold text-sm">Todos los usuarios tienen stock asignado o no requieren accion.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {usersWithoutStock.slice(0, 5).map((dbUser: any) => (
+                            <div key={dbUser.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between gap-3">
+                              <div>
+                                <p className="font-black text-white">{dbUser.name}</p>
+                                <p className="text-white/40 text-xs">{dbUser.email || 'Sin email'}</p>
+                              </div>
+                              <button onClick={() => { setActiveTab('users'); setShowAssignModal({ show: true, userId: dbUser.id, userName: dbUser.name }); }} className="px-3 py-2 rounded-xl bg-white/5 text-white/70 border border-white/10 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all">
+                                Asignar
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  <RequestsView requests={db.requests} role={role} onApprove={approveRequest} onReject={rejectRequest} />
+                </>
               )}
 
               {role === 'user' && (
                 <div className="space-y-10">
+                  <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div className="xl:col-span-2 bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                      <div>
+                        <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter">Estado Personal</h3>
+                        <p className="text-white/30 text-xs sm:text-sm font-bold uppercase tracking-widest">Tu situacion actual dentro del sistema</p>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Licencias Totales</p>
+                          <p className="text-4xl font-black mt-3">{myLicenses.length}</p>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Por Revelar</p>
+                          <p className="text-4xl font-black mt-3">{myLicenses.filter((license: any) => !license.claimed).length}</p>
+                        </div>
+                        <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Solicitudes Pendientes</p>
+                          <p className="text-4xl font-black mt-3">{myPendingRequests.length}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button onClick={() => setActiveTab('my-keys')} className="px-5 py-4 rounded-2xl bg-white text-black font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] transition-all">
+                          Ver mis llaves
+                        </button>
+                        <button onClick={() => setShowRequestModal(true)} className="px-5 py-4 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-500 transition-all">
+                          Solicitar licencia
+                        </button>
+                        <button onClick={() => setActiveTab('downloads')} className="px-5 py-4 rounded-2xl bg-white/5 text-white/70 border border-white/10 font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all">
+                          Abrir descargas
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#111] border border-white/10 rounded-[2rem] p-6 sm:p-8 space-y-5 shadow-2xl">
+                      <div>
+                        <h4 className="font-black uppercase tracking-widest text-sm text-white/80">Tu Actividad</h4>
+                        <p className="text-white/30 text-xs">Movimientos recientes de tu cuenta</p>
+                      </div>
+                      {myRecentLicenses.length === 0 ? (
+                        <p className="text-white/30 font-bold text-sm">Aun no tienes licencias recientes.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {myRecentLicenses.map((license: any) => (
+                            <div key={license.id} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+                              <p className="font-black text-white">{license.product}</p>
+                              <p className="text-white/40 text-xs">{license.claimed ? 'Revelada' : 'Pendiente de revelar'}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
                   <div className="flex items-end justify-between">
                     <div className="space-y-2">
                       <h3 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter">Productos Disponibles</h3>
@@ -553,19 +832,18 @@ export default function Dashboard() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-                    {db.catalog
-                      .filter((item: any) => db.licenses.filter(l => l.product === item.name && l.status === 'available').length > 0)
+                    {availableCatalog
                       .map((item: any) => (
                         <ProductCard 
                           key={item.id} 
                           product={item.name} 
-                          stock={db.licenses.filter(l => l.product === item.name && l.status === 'available').length} 
+                          stock={availableCountsByProduct[item.name] || 0} 
                           price={item.price}
                           iconType={item.iconType}
                           onClick={() => requestLicense(item.name, 1)} 
                         />
                       ))}
-                    {db.catalog.filter((item: any) => db.licenses.filter(l => l.product === item.name && l.status === 'available').length > 0).length === 0 && (
+                    {availableCatalog.length === 0 && (
                       <div className="col-span-full border border-white/10 border-dashed rounded-[3rem] p-20 text-center space-y-4">
                         <p className="text-white/20 font-black uppercase tracking-widest text-sm">No hay productos con stock disponible hoy</p>
                         <button onClick={() => setShowRequestModal(true)} className="px-8 py-3 bg-blue-600/10 text-blue-500 border border-blue-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Solicitar Pedido Especial</button>
@@ -646,7 +924,7 @@ export default function Dashboard() {
                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Nombre</label>
                    <input required name="name" defaultValue={showCatalogModal.item?.name || ''} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors" />
                  </div>
-                 <div className="grid grid-cols-2 gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                    <div className="space-y-1.5">
                      <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Categoría</label>
                      <input required name="category" defaultValue={showCatalogModal.item?.category || ''} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors" />
@@ -654,6 +932,10 @@ export default function Dashboard() {
                    <div className="space-y-1.5">
                      <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Precio</label>
                      <input required type="number" name="price" defaultValue={showCatalogModal.item?.price || 1} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors" />
+                   </div>
+                   <div className="space-y-1.5">
+                     <label className="text-[10px] font-black uppercase text-white/40 tracking-widest pl-1">Stock Minimo</label>
+                     <input required type="number" min="0" name="minStock" defaultValue={showCatalogModal.item?.minStock ?? 5} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm outline-none focus:border-emerald-500 transition-colors" />
                    </div>
                  </div>
                  <div className="space-y-1.5">
@@ -783,3 +1065,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

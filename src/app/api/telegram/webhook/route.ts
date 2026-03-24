@@ -5,11 +5,24 @@ import crypto from 'crypto';
 export const dynamic = 'force-dynamic';
 
 // Stable webhook secret derived from JWT_SECRET or a fallback
-const WEBHOOK_SECRET = crypto
-  .createHash('sha256')
-  .update(process.env.JWT_SECRET || 'micro-license-system-secret-key-2026')
-  .digest('hex')
-  .slice(0, 32); // Telegram allows 1-256 chars
+function getWebhookSecret(): string {
+  const configuredSecret = process.env.JWT_SECRET?.trim();
+  if (configuredSecret) {
+    return crypto.createHash('sha256').update(configuredSecret).digest('hex').slice(0, 32);
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET must be configured in production');
+  }
+
+  return crypto
+    .createHash('sha256')
+    .update(`dev-webhook-secret:${process.cwd()}`)
+    .digest('hex')
+    .slice(0, 32);
+}
+
+const WEBHOOK_SECRET = getWebhookSecret();
 
 // Export the secret so the setup endpoint can use it
 export { WEBHOOK_SECRET };
@@ -36,6 +49,9 @@ export async function POST(request: Request) {
     }
 
     const chatId = message.chat.id;
+    if (!settings.telegramChatId || chatId.toString() !== settings.telegramChatId.toString()) {
+      return NextResponse.json({ ok: false }, { status: 403 });
+    }
     const command = message.text.trim().toLowerCase();
     let responseText = '';
 

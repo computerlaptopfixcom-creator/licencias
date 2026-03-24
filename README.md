@@ -4,6 +4,30 @@ Panel de administración profesional diseñado para la gestión integral de inve
 
 ---
 
+## 🎉 Novedades Recientes
+
+### 🛡️ Hardening de Seguridad
+- **`JWT_SECRET` estricto:** Obligatorio en entorno de producción para prevenir firmas de tokens predecibles.
+- **Cookies Seguras:** Activación automática del flag `secure` para el `auth_token` al detectar producción.
+- **Autenticación Fuerte:** Creación de usuarios con contraseñas obligatorias (hasheadas vía bcrypt) y validación estricta. El cambio de clave exige siempre validar la contraseña actual (`currentPassword`).
+- **Webhook de Telegram Blindado:** Validación estricta del `telegramChatId` para evitar inyecciones desde chats no autorizados.
+
+### 📱 Usabilidad y Dashboard Mejorado
+- **Navegación Móvil Funcional:** Integración fluida entre módulos mediante selectores adaptados para dispositivos móviles.
+- **Sincronización de Rutas:** Acciones del dashboard (marcar notificaciones leídas, aprobar/rechazar solicitudes) enlazadas y verificadas contra los endpoints resolutores reales.
+- **Dashboard Admin (Atención Inmediata):** Nuevo panel que expone solicitudes pendientes, licencias fallidas recientes, alertas de stock mínimo y visibilidad de "Actividad Reciente".
+- **Dashboard Usuario (Estado Personal):** Nuevo bloque de resumen con acciones rápidas a un clic ("Ver mis llaves", "Solicitar licencia", "Descargas") para maximizar el uso inmersivo.
+
+### 📦 Gestión de Stock Avanzada
+- **Reglas de Reposición:** El panel alerta de productos con bajo stock en base a reglas de `minStock` predefinidas, sugiriendo la carga rápida por lotes.
+- **Catálogo Inteligente:** Los usuarios finales solo renderizan y pueden solicitar elementos del catálogo que realmente cuentan con llaves disponibles.
+
+### ⬇️ Centro de Descargas Renovado
+- **Organización Estructurada:** Las descargas cuentan con agrupación por categorías predefinidas con filtros rápidos a nivel de usuario.
+- **Metadatos Enriquecidos:** Inserción de descripciones cortas y destacamiento visual para descargas recomendadas.
+
+---
+
 ## ✨ Características Principales
 
 ### 👤 Administración (Panel de Control)

@@ -1,8 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
-// @ts-ignore
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
 const DB_PATH = path.join(process.cwd(), 'src/data/database.sqlite');
@@ -11,32 +9,32 @@ const LEGACY_JSON_PATH = path.join(process.cwd(), 'src/data/database.json');
 let db: Database.Database;
 
 const DEFAULT_CATALOG: any[] = [
-  { id: 'cat_1', category: 'Windows Keys', name: 'Windows Pro 10/11 Phone', price: 3.00 },
-  { id: 'cat_2', category: 'Windows Keys', name: 'Windows Home 10/11 Phone', price: 2.50 },
-  { id: 'cat_3', category: 'Windows Keys', name: 'Win Cloud Retail Phone', price: 2.50 },
-  { id: 'cat_4', category: 'Windows Keys', name: 'Win Enterprise MAK Phone', price: 5.00 },
-  { id: 'cat_5', category: 'Windows Keys', name: 'Win Pro Workstation MAK Phone', price: 4.50 },
-  { id: 'cat_6', category: 'Windows Keys', name: 'Win 2021 MAK LTSC Phone', price: 10.00 },
-  { id: 'cat_7', category: 'Windows Keys', name: 'Windows Pro 10/11 Online (OEM)', price: 6.00 },
-  { id: 'cat_8', category: 'Windows Keys', name: 'Windows Pro 10/11 Online (RETAIL)', price: 6.00 },
-  { id: 'cat_9', category: 'Windows Keys', name: 'Windows Home 10/11 Online (OEM)', price: 6.00 },
-  { id: 'cat_10', category: 'Office Keys', name: 'Office 2024 PP MAK & LTSC Phone', price: 7.00 },
-  { id: 'cat_11', category: 'Office Keys', name: 'Office 2021 Pro Plus Phone', price: 3.00 },
-  { id: 'cat_12', category: 'Office Keys', name: 'Office 2019 Pro Plus Phone', price: 2.50 },
-  { id: 'cat_13', category: 'Office Keys', name: 'Office 2019 Home Business Phone', price: 4.00 },
-  { id: 'cat_14', category: 'Office Keys', name: 'Office 2016 Pro Plus Phone', price: 2.50 },
-  { id: 'cat_15', category: 'Office Keys', name: 'Office 2013 Pro Plus Phone', price: 3.50 },
-  { id: 'cat_16', category: 'Visio Keys', name: 'Visio 2021 Pro Phone', price: 3.00 },
-  { id: 'cat_17', category: 'Visio Keys', name: 'Visio 2019 Pro Phone', price: 3.00 },
-  { id: 'cat_18', category: 'Project Keys', name: 'Project 2021 Pro Phone', price: 3.00 },
-  { id: 'cat_19', category: 'Project Keys', name: 'Project 2019 Pro Phone', price: 3.00 },
-  { id: 'cat_20', category: 'Server Keys', name: 'Server 2025 Datacenter Azure Phone', price: 6.00 },
-  { id: 'cat_21', category: 'Server Keys', name: 'Server 2025 Standard Phone', price: 5.00 },
-  { id: 'cat_22', category: 'Server Keys', name: 'Server 2021 Standard Phone', price: 4.00 },
-  { id: 'cat_23', category: 'Server Keys', name: 'Server 2019 Standard Phone', price: 4.00 },
-  { id: 'cat_24', category: 'Server Keys', name: 'Server 2016 Datacenter Phone', price: 4.00 },
-  { id: 'cat_25', category: 'Server Keys', name: 'Server 2016 Standard Phone', price: 4.00 },
-  { id: 'cat_26', category: 'Server Keys', name: 'Server 2012 Datacenter Phone', price: 7.00 }
+  { id: 'cat_1', category: 'Windows Keys', name: 'Windows Pro 10/11 Phone', price: 3.00, minStock: 5 },
+  { id: 'cat_2', category: 'Windows Keys', name: 'Windows Home 10/11 Phone', price: 2.50, minStock: 5 },
+  { id: 'cat_3', category: 'Windows Keys', name: 'Win Cloud Retail Phone', price: 2.50, minStock: 5 },
+  { id: 'cat_4', category: 'Windows Keys', name: 'Win Enterprise MAK Phone', price: 5.00, minStock: 4 },
+  { id: 'cat_5', category: 'Windows Keys', name: 'Win Pro Workstation MAK Phone', price: 4.50, minStock: 4 },
+  { id: 'cat_6', category: 'Windows Keys', name: 'Win 2021 MAK LTSC Phone', price: 10.00, minStock: 3 },
+  { id: 'cat_7', category: 'Windows Keys', name: 'Windows Pro 10/11 Online (OEM)', price: 6.00, minStock: 4 },
+  { id: 'cat_8', category: 'Windows Keys', name: 'Windows Pro 10/11 Online (RETAIL)', price: 6.00, minStock: 4 },
+  { id: 'cat_9', category: 'Windows Keys', name: 'Windows Home 10/11 Online (OEM)', price: 6.00, minStock: 4 },
+  { id: 'cat_10', category: 'Office Keys', name: 'Office 2024 PP MAK & LTSC Phone', price: 7.00, minStock: 4 },
+  { id: 'cat_11', category: 'Office Keys', name: 'Office 2021 Pro Plus Phone', price: 3.00, minStock: 6 },
+  { id: 'cat_12', category: 'Office Keys', name: 'Office 2019 Pro Plus Phone', price: 2.50, minStock: 6 },
+  { id: 'cat_13', category: 'Office Keys', name: 'Office 2019 Home Business Phone', price: 4.00, minStock: 4 },
+  { id: 'cat_14', category: 'Office Keys', name: 'Office 2016 Pro Plus Phone', price: 2.50, minStock: 4 },
+  { id: 'cat_15', category: 'Office Keys', name: 'Office 2013 Pro Plus Phone', price: 3.50, minStock: 3 },
+  { id: 'cat_16', category: 'Visio Keys', name: 'Visio 2021 Pro Phone', price: 3.00, minStock: 3 },
+  { id: 'cat_17', category: 'Visio Keys', name: 'Visio 2019 Pro Phone', price: 3.00, minStock: 3 },
+  { id: 'cat_18', category: 'Project Keys', name: 'Project 2021 Pro Phone', price: 3.00, minStock: 3 },
+  { id: 'cat_19', category: 'Project Keys', name: 'Project 2019 Pro Phone', price: 3.00, minStock: 3 },
+  { id: 'cat_20', category: 'Server Keys', name: 'Server 2025 Datacenter Azure Phone', price: 6.00, minStock: 2 },
+  { id: 'cat_21', category: 'Server Keys', name: 'Server 2025 Standard Phone', price: 5.00, minStock: 2 },
+  { id: 'cat_22', category: 'Server Keys', name: 'Server 2021 Standard Phone', price: 4.00, minStock: 2 },
+  { id: 'cat_23', category: 'Server Keys', name: 'Server 2019 Standard Phone', price: 4.00, minStock: 2 },
+  { id: 'cat_24', category: 'Server Keys', name: 'Server 2016 Datacenter Phone', price: 4.00, minStock: 2 },
+  { id: 'cat_25', category: 'Server Keys', name: 'Server 2016 Standard Phone', price: 4.00, minStock: 2 },
+  { id: 'cat_26', category: 'Server Keys', name: 'Server 2012 Datacenter Phone', price: 7.00, minStock: 2 }
 ];
 
 export function initDb() {
@@ -64,7 +62,8 @@ export function initDb() {
       category TEXT NOT NULL,
       name TEXT NOT NULL,
       price REAL NOT NULL,
-      iconType TEXT
+      iconType TEXT,
+      minStock INTEGER NOT NULL DEFAULT 5
     );
     CREATE TABLE IF NOT EXISTS licenses (
       id TEXT PRIMARY KEY,
@@ -105,6 +104,8 @@ export function initDb() {
       title TEXT NOT NULL,
       link TEXT NOT NULL,
       category TEXT NOT NULL,
+      description TEXT,
+      featured INTEGER NOT NULL DEFAULT 0,
       createdAt TEXT NOT NULL,
       updatedAt TEXT
     );
@@ -138,10 +139,10 @@ export function initDb() {
 
   const hasCatalog = db.prepare('SELECT COUNT(*) as count FROM catalog').get() as any;
   if (hasCatalog.count === 0) {
-    const insertCat = db.prepare(`INSERT INTO catalog (id, category, name, price) VALUES (?, ?, ?, ?)`);
+    const insertCat = db.prepare(`INSERT INTO catalog (id, category, name, price, minStock) VALUES (?, ?, ?, ?, ?)`);
     db.transaction(() => {
       for (const c of DEFAULT_CATALOG) {
-        insertCat.run(c.id, c.category, c.name, c.price);
+        insertCat.run(c.id, c.category, c.name, c.price, c.minStock);
       }
     })();
   }
@@ -152,8 +153,8 @@ function migrateData(data: any) {
   const insertLic = db.prepare(`INSERT OR REPLACE INTO licenses (id, product, key, status, assignedTo, assignedAt, assignedBy, claimed, claimedAt, reportedFailed, reportedAt, batchNote, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const insertReq = db.prepare(`INSERT OR REPLACE INTO requests (id, userId, userName, product, count, status, createdAt, resolvedAt, rejectedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const insertNotif = db.prepare(`INSERT OR REPLACE INTO notifications (id, userId, message, type, read, createdAt) VALUES (?, ?, ?, ?, ?, ?)`);
-  const insertCat = db.prepare(`INSERT OR REPLACE INTO catalog (id, category, name, price, iconType) VALUES (?, ?, ?, ?, ?)`);
-  const insertDown = db.prepare(`INSERT OR REPLACE INTO downloads (id, title, link, category, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)`);
+  const insertCat = db.prepare(`INSERT OR REPLACE INTO catalog (id, category, name, price, iconType, minStock) VALUES (?, ?, ?, ?, ?, ?)`);
+  const insertDown = db.prepare(`INSERT OR REPLACE INTO downloads (id, title, link, category, description, featured, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
 
   db.transaction(() => {
     for (const u of (data.users || [])) {
@@ -169,10 +170,10 @@ function migrateData(data: any) {
       insertNotif.run(n.id, n.userId, n.message, n.type || 'info', n.read ? 1 : 0, n.createdAt || new Date().toISOString());
     }
     for (const c of (data.catalog || [])) {
-      insertCat.run(c.id, c.category, c.name, c.price, c.iconType || null);
+      insertCat.run(c.id, c.category, c.name, c.price, c.iconType || null, c.minStock || 5);
     }
     for (const d of (data.downloads || [])) {
-      insertDown.run(d.id, d.title, d.link, d.category, d.createdAt || new Date().toISOString(), d.updatedAt || null);
+      insertDown.run(d.id, d.title, d.link, d.category, d.description || null, d.featured ? 1 : 0, d.createdAt || new Date().toISOString(), d.updatedAt || null);
     }
     if (data.settings) {
       const s = data.settings;
@@ -272,15 +273,19 @@ export function createInitialAdmin(name: string, passwordHash: string) {
 
 export function addUser(name: string, email?: string, password?: string, _role?: string) {
   const safeName = sanitizeName(name);
+  const safeEmail = email?.trim().toLowerCase() || '';
   if (!safeName) return null;
 
-  const existing = findUser(email || safeName);
-  if (existing && email) return null;
+  const existingByName = db.prepare('SELECT 1 FROM users WHERE LOWER(name) = LOWER(?)').get(safeName);
+  const existingByEmail = safeEmail
+    ? db.prepare('SELECT 1 FROM users WHERE LOWER(email) = ?').get(safeEmail)
+    : null;
+  if (existingByName || existingByEmail) return null;
 
   const user = {
     id: `u_${crypto.randomUUID().slice(0, 8)}`,
     name: safeName,
-    email: email || '',
+    email: safeEmail,
     password: password || '',
     role: _role || 'user',
     mustChangeCredentials: 0,
@@ -512,7 +517,7 @@ export function getCatalog() {
   return db.prepare('SELECT * FROM catalog').all();
 }
 
-export function addCatalogItem(category: string, name: string, price: number, iconType: string | null = null) {
+export function addCatalogItem(category: string, name: string, price: number, iconType: string | null = null, minStock: number = 5) {
   const existing = db.prepare(`SELECT 1 FROM catalog WHERE name=?`).get(name);
   if (existing) return null;
   
@@ -521,14 +526,15 @@ export function addCatalogItem(category: string, name: string, price: number, ic
     category,
     name,
     price,
-    iconType
+    iconType,
+    minStock
   };
-  db.prepare(`INSERT INTO catalog (id, category, name, price, iconType) VALUES (?, ?, ?, ?, ?)`)
-    .run(item.id, item.category, item.name, item.price, item.iconType);
+  db.prepare(`INSERT INTO catalog (id, category, name, price, iconType, minStock) VALUES (?, ?, ?, ?, ?, ?)`)
+    .run(item.id, item.category, item.name, item.price, item.iconType, item.minStock);
   return item;
 }
 
-export function updateCatalogItem(id: string, data: { category?: string, name?: string, price?: number, iconType?: string }) {
+export function updateCatalogItem(id: string, data: { category?: string, name?: string, price?: number, iconType?: string, minStock?: number }) {
   const item = db.prepare(`SELECT * FROM catalog WHERE id=?`).get(id) as any;
   if (!item) return { success: false, error: 'Producto no encontrado' };
   
@@ -536,9 +542,10 @@ export function updateCatalogItem(id: string, data: { category?: string, name?: 
   const name = data.name !== undefined ? data.name : item.name;
   const price = data.price !== undefined ? data.price : item.price;
   const iconType = data.iconType !== undefined ? data.iconType : item.iconType;
+  const minStock = data.minStock !== undefined ? data.minStock : item.minStock;
   
-  db.prepare(`UPDATE catalog SET category=?, name=?, price=?, iconType=? WHERE id=?`).run(category, name, price, iconType, id);
-  return { success: true, item: { ...item, category, name, price, iconType } };
+  db.prepare(`UPDATE catalog SET category=?, name=?, price=?, iconType=?, minStock=? WHERE id=?`).run(category, name, price, iconType, minStock, id);
+  return { success: true, item: { ...item, category, name, price, iconType, minStock } };
 }
 
 export function deleteCatalogItem(id: string) {
@@ -550,29 +557,33 @@ export function getDownloads() {
   return db.prepare('SELECT * FROM downloads').all() || [];
 }
 
-export function addDownload(title: string, link: string, category: string) {
+export function addDownload(title: string, link: string, category: string, description: string = '', featured: boolean = false) {
   const item = {
     id: `dw_${crypto.randomUUID().slice(0, 8)}`,
     title: title.trim(),
     link: link.trim(),
     category: category.trim(),
+    description: description.trim() || null,
+    featured,
     createdAt: new Date().toISOString()
   };
-  db.prepare(`INSERT INTO downloads (id, title, link, category, createdAt) VALUES (?, ?, ?, ?, ?)`)
-    .run(item.id, item.title, item.link, item.category, item.createdAt);
+  db.prepare(`INSERT INTO downloads (id, title, link, category, description, featured, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .run(item.id, item.title, item.link, item.category, item.description, item.featured ? 1 : 0, item.createdAt);
   return item;
 }
 
-export function updateDownload(id: string, data: { title?: string, link?: string, category?: string }) {
+export function updateDownload(id: string, data: { title?: string, link?: string, category?: string, description?: string, featured?: boolean }) {
   const item = db.prepare(`SELECT * FROM downloads WHERE id=?`).get(id) as any;
   if (!item) return { success: false, error: 'Descarga no encontrada' };
   
   const title = data.title !== undefined ? data.title.trim() : item.title;
   const link = data.link !== undefined ? data.link.trim() : item.link;
   const category = data.category !== undefined ? data.category.trim() : item.category;
+  const description = data.description !== undefined ? (data.description.trim() || null) : item.description;
+  const featured = data.featured !== undefined ? data.featured : Boolean(item.featured);
   
-  db.prepare(`UPDATE downloads SET title=?, link=?, category=?, updatedAt=? WHERE id=?`).run(title, link, category, new Date().toISOString(), id);
-  return { success: true, download: { ...item, title, link, category } };
+  db.prepare(`UPDATE downloads SET title=?, link=?, category=?, description=?, featured=?, updatedAt=? WHERE id=?`).run(title, link, category, description, featured ? 1 : 0, new Date().toISOString(), id);
+  return { success: true, download: { ...item, title, link, category, description, featured } };
 }
 
 export function deleteDownload(id: string) {
@@ -600,3 +611,14 @@ export function replaceFailedLicense(licenseId: string) {
   
   return { success };
 }
+  const catalogColumns = db.prepare(`PRAGMA table_info(catalog)`).all() as Array<{ name: string }>;
+  if (!catalogColumns.some((column) => column.name === 'minStock')) {
+    db.exec(`ALTER TABLE catalog ADD COLUMN minStock INTEGER NOT NULL DEFAULT 5`);
+  }
+  const downloadColumns = db.prepare(`PRAGMA table_info(downloads)`).all() as Array<{ name: string }>;
+  if (!downloadColumns.some((column) => column.name === 'description')) {
+    db.exec(`ALTER TABLE downloads ADD COLUMN description TEXT`);
+  }
+  if (!downloadColumns.some((column) => column.name === 'featured')) {
+    db.exec(`ALTER TABLE downloads ADD COLUMN featured INTEGER NOT NULL DEFAULT 0`);
+  }

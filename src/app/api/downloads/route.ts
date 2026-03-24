@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     try {
       const downloads = getDownloads();
       return NextResponse.json(downloads);
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
   }, request);
@@ -18,13 +18,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return withAdmin(async (_, req) => {
     try {
-      const { title, link, category } = await req.json();
+      const { title, link, category, description, featured } = await req.json();
       if (!title || !link || !category) {
-        return NextResponse.json({ error: 'Título, enlace y categoría son requeridos' }, { status: 400 });
+        return NextResponse.json({ error: 'Titulo, enlace y categoria son requeridos' }, { status: 400 });
       }
-      const download = addDownload(title, link, category);
+      const download = addDownload(title, link, category, description || '', Boolean(featured));
       return NextResponse.json(download, { status: 201 });
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
   }, request);
@@ -35,9 +35,8 @@ export async function DELETE(request: Request) {
     try {
       const { searchParams } = new URL(request.url);
       const id = searchParams.get('id');
-      
+
       if (!id) {
-        // Fallback to body if not in query
         try {
           const body = await req.json();
           if (body.id) {
@@ -45,7 +44,7 @@ export async function DELETE(request: Request) {
             if (!result.success) return NextResponse.json({ error: result.error }, { status: 404 });
             return NextResponse.json(result);
           }
-        } catch (e) {}
+        } catch {}
         return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
       }
 
@@ -54,7 +53,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: result.error }, { status: 404 });
       }
       return NextResponse.json(result);
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
   }, request);
@@ -63,17 +62,17 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
   return withAdmin(async (_, req) => {
     try {
-      const { id, title, link, category } = await req.json();
+      const { id, title, link, category, description, featured } = await req.json();
       if (!id) {
         return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
       }
       const { updateDownload } = await import('@/lib/db');
-      const result = updateDownload(id, { title, link, category });
+      const result = updateDownload(id, { title, link, category, description, featured: Boolean(featured) });
       if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 404 });
       }
       return NextResponse.json(result);
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
   }, request);

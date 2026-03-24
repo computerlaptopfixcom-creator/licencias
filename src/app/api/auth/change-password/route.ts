@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     try {
       const { currentPassword, newPassword } = await req.json();
       
-      if (!newPassword) {
+      if (!currentPassword || !newPassword) {
         return NextResponse.json({ error: 'Campos requeridos' }, { status: 400 });
       }
 
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       }
 
       // Verify current password before allowing change
-      if (currentPassword) {
+      {
         let match = false;
         if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
           match = await bcrypt.compare(currentPassword, user.password);
