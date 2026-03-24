@@ -8,7 +8,11 @@ function getJwtSecret(): string {
   if (configuredSecret) return configuredSecret;
 
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be configured in production');
+    if (!(globalThis as any)._ephemeralJwtSecret) {
+      console.warn("⚠️ Advertencia: No se detectó JWT_SECRET en producción. Usando secreto efímero en memoria (las sesiones expirarán al reiniciar el servidor).");
+      (globalThis as any)._ephemeralJwtSecret = crypto.randomBytes(32).toString('hex');
+    }
+    return (globalThis as any)._ephemeralJwtSecret;
   }
 
   return crypto

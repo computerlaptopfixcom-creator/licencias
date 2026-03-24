@@ -12,7 +12,11 @@ function getWebhookSecret(): string {
   }
 
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be configured in production');
+    if (!(globalThis as any)._ephemeralWebhookSecret) {
+      console.warn("⚠️ Advertencia: No se detectó JWT_SECRET en producción. Usando secreto de webhook efímero (tendrás que re-conectar el bot si el servidor se reinicia).");
+      (globalThis as any)._ephemeralWebhookSecret = crypto.randomBytes(32).toString('hex');
+    }
+    return (globalThis as any)._ephemeralWebhookSecret;
   }
 
   return crypto
